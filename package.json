@@ -1,0 +1,32 @@
+{
+  "name": "@elseblock/supersequel",
+  "version": "0.2.1",
+  "description": "MySQL paralell request api, using plain SQL statements built by handlebar templates, validated by json schema.",
+  "main": "./index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jzumbrun/supersequel.git"
+  },
+  "scripts": {
+    "test": "NODE_ENV=testing mocha ./index.test.js"
+  },
+  "keywords": [
+    "sql",
+    "json schema",
+    "api",
+    "rest"
+  ],
+  "author": "Jon Zumbrun",
+  "license": "MIT",
+  "dependencies": {
+    "ajv": "^6.10.2",
+    "handlebars": "^4.5.3",
+    "lodash": "4.17.15",
+    "sqlstring": "2.3.1"
+  },
+  "peerDependencies": {},
+  "devDependencies": {
+    "expect": "24.9.0",
+    "mocha": "7.0.0"
+  }
+}
