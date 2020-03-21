@@ -121,14 +121,14 @@ class Superqequel {
    * @param {object} request
    * @param {object} definition
    * @param {object} config
-   * @param {object} accessor
+   * @param {object} user
    * @param {array} history
    * @return Promise
    */
-  query (request, definition, config, accessor = {}, history = {}) {
+  query (request, definition, config, user = {}, history = {}) {
     const statement = this.hbs.compile(definition.statement, {
       ...(request.properties || {}),
-      $accessor: accessor,
+      $user: user,
       $history: history
     })
     return config.query(statement)
@@ -171,7 +171,7 @@ class Superqequel {
     return async (req, res) => {
       const response = await this.execute({
         queries: req.body.queries || [],
-        accessor: req.accessor,
+        user: req.user,
         ...config
       })
       res.send(response)
@@ -234,7 +234,7 @@ class Superqequel {
         }
 
         // Do we have access rights?
-        if (!intersection(definition.access, config.accessor.access).length) {
+        if (!intersection(definition.access, config.user.access).length) {
           response.queries.push({
             ...this.getQueryName(query),
             error: { errno: 1003, code: 'ERROR_QUERY_NO_ACCESS' }
@@ -257,7 +257,7 @@ class Superqequel {
             query,
             definition,
             config,
-            config.accessor,
+            config.user,
             history
           )
             .then(rows => {

@@ -33,15 +33,15 @@ describe('Supersequel', () => {
               {
                 name: 'sql.injection',
                 statement:
-                  'SELECT {{: select}} FROM accessors WHERE `id`=105 {{? injection}}',
-                access: ['accessor']
+                  'SELECT {{: select}} FROM users WHERE `id`=105 {{? injection}}',
+                access: ['user']
               }
             ]
           })(
           {
-            accessor: {
+            user: {
               id: 123,
-              access: ['accessor']
+              access: ['user']
             },
             body: {
               queries: [
@@ -59,7 +59,7 @@ describe('Supersequel', () => {
         )
         .then(() => {
           expect(res.data.queries[0].results).toEqual(
-            "SELECT `id` FROM accessors WHERE `id`=105 'OR 1&#x3D;1;'"
+            "SELECT `id` FROM users WHERE `id`=105 'OR 1&#x3D;1;'"
           )
           done()
         })
@@ -76,24 +76,24 @@ describe('Supersequel', () => {
               {
                 name: 'immediate',
                 statement: '0',
-                access: ['accessor']
+                access: ['user']
               },
               {
                 name: 'short',
                 statement: '100',
-                access: ['accessor']
+                access: ['user']
               },
               {
                 name: 'long',
                 statement: '200',
-                access: ['accessor']
+                access: ['user']
               }
             ]
           })(
           {
-            accessor: {
+            user: {
               id: 123,
-              access: ['accessor']
+              access: ['user']
             },
             body: {
               queries: [
@@ -142,19 +142,19 @@ describe('Supersequel', () => {
               {
                 name: 'thing.one',
                 statement: 'thing.one',
-                access: ['accessor']
+                access: ['user']
               },
               {
                 name: 'thing.two',
                 statement: 'thing.two is bigger than {{$history.one}}',
-                access: ['accessor']
+                access: ['user']
               }
             ]
           })(
           {
-            accessor: {
+            user: {
               id: 123,
-              access: ['accessor']
+              access: ['user']
             },
             body: {
               queries: [
@@ -201,14 +201,14 @@ describe('Supersequel', () => {
               {
                 name: 'thing.one',
                 statement: 'thing.one {{_trim trimspace}}',
-                access: ['accessor']
+                access: ['user']
               }
             ]
           })(
           {
-            accessor: {
+            user: {
               id: 123,
-              access: ['accessor']
+              access: ['user']
             },
             body: {
               queries: [
@@ -244,9 +244,9 @@ describe('Supersequel', () => {
     it('nested helpers', done => {
       supersequel
         .execute({
-          accessor: {
+          user: {
             id: 123,
-            access: ['accessor']
+            access: ['user']
           },
           queries: [
             {
@@ -265,7 +265,7 @@ describe('Supersequel', () => {
             {
               name: 'nested',
               statement: [
-                'UPDATE accessors SET ',
+                'UPDATE users SET ',
                 '{{#_trim ", "}}',
                 '{{#each fields}}',
                 '{{#unless (_eq @key "id")}}',
@@ -274,7 +274,7 @@ describe('Supersequel', () => {
                 '{{/each}}',
                 '{{/_trim}}'
               ].join(''),
-              access: ['accessor']
+              access: ['user']
             }
           ]
         })
@@ -283,7 +283,7 @@ describe('Supersequel', () => {
             {
               id: '1',
               name: 'nested',
-              results: "UPDATE accessors SET `column1`=3, `column2`='hello'"
+              results: "UPDATE users SET `column1`=3, `column2`='hello'"
             }
           ])
           done()
