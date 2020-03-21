@@ -1,27 +1,29 @@
-const _ = require('lodash');
-const expect = require('expect');
+const mocha = require('mocha')
+const _ = require('lodash')
+const expect = require('expect')
 const supersequel = require('./index')({
   helpers: [{ functions: _, prefix: '_' }],
   release: () => null,
   query: statement => {
     return new Promise((resolve) => {
-      const number = parseInt(statement);
+      const number = parseInt(statement)
       if (parseInt(statement) > -1) {
         setTimeout(() => {
-          resolve(statement);
-        }, number);
-      } else resolve(statement);
-    });
+          resolve(statement)
+        }, number)
+      } else resolve(statement)
+    })
   }
-});
+})
+const { describe, it } = mocha
 
 describe('Supersequel', () => {
   describe('middleware', done => {
     const res = {
       send: response => {
-        res.data = response;
+        res.data = response
       }
-    };
+    }
 
     it('sql injection', done => {
       supersequel
@@ -31,16 +33,15 @@ describe('Supersequel', () => {
               {
                 name: 'sql.injection',
                 statement:
-                  'SELECT {{: select}} FROM users WHERE `id`=105 {{? injection}}',
-                access: ['user']
+                  'SELECT {{: select}} FROM accessors WHERE `id`=105 {{? injection}}',
+                access: ['accessor']
               }
             ]
-          })
-        (
+          })(
           {
-            user: {
+            accessor: {
               id: 123,
-              access: ['user']
+              access: ['accessor']
             },
             body: {
               queries: [
@@ -58,14 +59,14 @@ describe('Supersequel', () => {
         )
         .then(() => {
           expect(res.data.queries[0].results).toEqual(
-            "SELECT `id` FROM users WHERE `id`=105 'OR 1&#x3D;1;'"
-          );
-          done();
+            "SELECT `id` FROM accessors WHERE `id`=105 'OR 1&#x3D;1;'"
+          )
+          done()
         })
         .catch(error => {
-          done(error);
-        });
-    });
+          done(error)
+        })
+    })
 
     it('sync', done => {
       supersequel
@@ -75,25 +76,24 @@ describe('Supersequel', () => {
               {
                 name: 'immediate',
                 statement: '0',
-                access: ['user']
+                access: ['accessor']
               },
               {
                 name: 'short',
                 statement: '100',
-                access: ['user']
+                access: ['accessor']
               },
               {
                 name: 'long',
                 statement: '200',
-                access: ['user']
+                access: ['accessor']
               }
             ]
-          })
-        (
+          })(
           {
-            user: {
+            accessor: {
               id: 123,
-              access: ['user']
+              access: ['accessor']
             },
             body: {
               queries: [
@@ -126,13 +126,13 @@ describe('Supersequel', () => {
             { id: '4', name: 'immediate', results: '0' },
             { id: '3', name: 'short', results: '100' },
             { id: '2', name: 'long', results: '200' }
-          ]);
-          done();
+          ])
+          done()
         })
         .catch(error => {
-          done(error);
-        });
-    });
+          done(error)
+        })
+    })
 
     it('previous query results', done => {
       supersequel
@@ -142,20 +142,19 @@ describe('Supersequel', () => {
               {
                 name: 'thing.one',
                 statement: 'thing.one',
-                access: ['user']
+                access: ['accessor']
               },
               {
                 name: 'thing.two',
                 statement: 'thing.two is bigger than {{$history.one}}',
-                access: ['user']
+                access: ['accessor']
               }
             ]
-          })
-        (
+          })(
           {
-            user: {
+            accessor: {
               id: 123,
-              access: ['user']
+              access: ['accessor']
             },
             body: {
               queries: [
@@ -186,13 +185,13 @@ describe('Supersequel', () => {
               name: 'thing.two',
               results: "thing.two is bigger than 'thing.one'"
             }
-          ]);
-          done();
+          ])
+          done()
         })
         .catch(error => {
-          done(error);
-        });
-    });
+          done(error)
+        })
+    })
 
     it('registered helpers', done => {
       supersequel
@@ -202,15 +201,14 @@ describe('Supersequel', () => {
               {
                 name: 'thing.one',
                 statement: 'thing.one {{_trim trimspace}}',
-                access: ['user']
+                access: ['accessor']
               }
             ]
-          })
-        (
+          })(
           {
-            user: {
+            accessor: {
               id: 123,
-              access: ['user']
+              access: ['accessor']
             },
             body: {
               queries: [
@@ -233,22 +231,22 @@ describe('Supersequel', () => {
               name: 'thing.one',
               results: "thing.one 'nospaces'"
             }
-          ]);
-          done();
+          ])
+          done()
         })
         .catch(error => {
-          done(error);
-        });
-    });
-  });
+          done(error)
+        })
+    })
+  })
 
   describe('execute', () => {
     it('nested helpers', done => {
       supersequel
         .execute({
-          user: {
+          accessor: {
             id: 123,
-            access: ['user']
+            access: ['accessor']
           },
           queries: [
             {
@@ -267,7 +265,7 @@ describe('Supersequel', () => {
             {
               name: 'nested',
               statement: [
-                'UPDATE users SET ',
+                'UPDATE accessors SET ',
                 '{{#_trim ", "}}',
                 '{{#each fields}}',
                 '{{#unless (_eq @key "id")}}',
@@ -276,7 +274,7 @@ describe('Supersequel', () => {
                 '{{/each}}',
                 '{{/_trim}}'
               ].join(''),
-              access: ['user']
+              access: ['accessor']
             }
           ]
         })
@@ -285,14 +283,14 @@ describe('Supersequel', () => {
             {
               id: '1',
               name: 'nested',
-              results: "UPDATE users SET `column1`=3, `column2`='hello'"
+              results: "UPDATE accessors SET `column1`=3, `column2`='hello'"
             }
-          ]);
-          done();
+          ])
+          done()
         })
         .catch(error => {
-          done(error);
-        });
-    });
-  });
-});
+          done(error)
+        })
+    })
+  })
+})

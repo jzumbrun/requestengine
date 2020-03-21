@@ -8,7 +8,7 @@
     "url": "https://github.com/jzumbrun/supersequel.git"
   },
   "scripts": {
-    "test": "NODE_ENV=testing mocha ./index.test.js"
+    "test": "standard --fix && NODE_ENV=testing mocha ./index.test.js"
   },
   "keywords": [
     "sql",
@@ -26,6 +26,7 @@
   },
   "peerDependencies": {},
   "devDependencies": {
+    "standard": "*",
     "expect": "24.9.0",
     "mocha": "7.0.0"
   }
