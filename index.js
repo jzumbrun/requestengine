@@ -61,7 +61,7 @@ class Superqequel {
             type: 'string',
             default: 'ERROR_MISSING_NAME'
           },
-          expression: {
+          statement: {
             type: 'string',
             default: ''
           },
@@ -126,12 +126,12 @@ class Superqequel {
    * @return Promise
    */
   query(request, definition, config, user = {}, history = {}) {
-    const expression = this.hbs.compile(definition.expression, {
+    const statement = this.hbs.compile(definition.statement, {
       ...(request.properties || {}),
       $user: user,
       $history: history
     });
-    return config.query(expression);
+    return config.query(statement);
   }
 
   /**
@@ -164,18 +164,18 @@ class Superqequel {
   }
 
   /**
-   * Query route
-   * @param {object} req
-   * @param {object} res
+   * Query middleware
    * @param {object} config
    */
-  async route(req, res, config = {}) {
-    const response = await this.execute({
-      queries: req.body.queries || [],
-      user: req.user,
-      ...config
-    });
-    res.send(response);
+  middleware(config = {}) {
+    return async (req, res) => {
+      const response = await this.execute({
+        queries: req.body.queries || [],
+        user: req.user,
+        ...config
+      });
+      res.send(response);
+    }
   }
 
   /**
@@ -260,10 +260,10 @@ class Superqequel {
             config.user,
             history
           )
-            .then(rows => {
-              this.outbound(response, query, rows, definition, history);
-            })
-            .catch(error => this.queryError(error, query, response, config));
+          .then(rows => {
+            this.outbound(response, query, rows, definition, history);
+          })
+          .catch(error => this.queryError(error, query, response, config));
 
           if (query.sync) await queryPromise;
           else async.push(queryPromise);

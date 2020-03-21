@@ -3,20 +3,20 @@ const expect = require('expect');
 const supersequel = require('./index')({
   helpers: [{ functions: _, prefix: '_' }],
   release: () => null,
-  query: expression => {
-    return new Promise((resolve, reject) => {
-      const number = parseInt(expression);
-      if (parseInt(expression) > -1) {
+  query: statement => {
+    return new Promise((resolve) => {
+      const number = parseInt(statement);
+      if (parseInt(statement) > -1) {
         setTimeout(() => {
-          resolve(expression);
+          resolve(statement);
         }, number);
-      } else resolve(expression);
+      } else resolve(statement);
     });
   }
 });
 
 describe('Supersequel', () => {
-  describe('route', done => {
+  describe('middleware', done => {
     const res = {
       send: response => {
         res.data = response;
@@ -25,7 +25,18 @@ describe('Supersequel', () => {
 
     it('sql injection', done => {
       supersequel
-        .route(
+        .middleware(
+          {
+            definitions: [
+              {
+                name: 'sql.injection',
+                statement:
+                  'SELECT {{: select}} FROM users WHERE `id`=105 {{? injection}}',
+                access: ['user']
+              }
+            ]
+          })
+        (
           {
             user: {
               id: 123,
@@ -43,17 +54,7 @@ describe('Supersequel', () => {
               ]
             }
           },
-          res,
-          {
-            definitions: [
-              {
-                name: 'sql.injection',
-                expression:
-                  'SELECT {{: select}} FROM users WHERE `id`=105 {{? injection}}',
-                access: ['user']
-              }
-            ]
-          }
+          res
         )
         .then(() => {
           expect(res.data.queries[0].results).toEqual(
@@ -68,7 +69,27 @@ describe('Supersequel', () => {
 
     it('sync', done => {
       supersequel
-        .route(
+        .middleware(
+          {
+            definitions: [
+              {
+                name: 'immediate',
+                statement: '0',
+                access: ['user']
+              },
+              {
+                name: 'short',
+                statement: '100',
+                access: ['user']
+              },
+              {
+                name: 'long',
+                statement: '200',
+                access: ['user']
+              }
+            ]
+          })
+        (
           {
             user: {
               id: 123,
@@ -97,26 +118,7 @@ describe('Supersequel', () => {
               ]
             }
           },
-          res,
-          {
-            definitions: [
-              {
-                name: 'immediate',
-                expression: '0',
-                access: ['user']
-              },
-              {
-                name: 'short',
-                expression: '100',
-                access: ['user']
-              },
-              {
-                name: 'long',
-                expression: '200',
-                access: ['user']
-              }
-            ]
-          }
+          res
         )
         .then(() => {
           expect(res.data.queries).toEqual([
@@ -134,7 +136,22 @@ describe('Supersequel', () => {
 
     it('previous query results', done => {
       supersequel
-        .route(
+        .middleware(
+          {
+            definitions: [
+              {
+                name: 'thing.one',
+                statement: 'thing.one',
+                access: ['user']
+              },
+              {
+                name: 'thing.two',
+                statement: 'thing.two is bigger than {{$history.one}}',
+                access: ['user']
+              }
+            ]
+          })
+        (
           {
             user: {
               id: 123,
@@ -155,21 +172,7 @@ describe('Supersequel', () => {
               ]
             }
           },
-          res,
-          {
-            definitions: [
-              {
-                name: 'thing.one',
-                expression: 'thing.one',
-                access: ['user']
-              },
-              {
-                name: 'thing.two',
-                expression: 'thing.two is bigger than {{$history.one}}',
-                access: ['user']
-              }
-            ]
-          }
+          res
         )
         .then(() => {
           expect(res.data.queries).toEqual([
@@ -193,7 +196,17 @@ describe('Supersequel', () => {
 
     it('registered helpers', done => {
       supersequel
-        .route(
+        .middleware(
+          {
+            definitions: [
+              {
+                name: 'thing.one',
+                statement: 'thing.one {{_trim trimspace}}',
+                access: ['user']
+              }
+            ]
+          })
+        (
           {
             user: {
               id: 123,
@@ -211,16 +224,7 @@ describe('Supersequel', () => {
               ]
             }
           },
-          res,
-          {
-            definitions: [
-              {
-                name: 'thing.one',
-                expression: 'thing.one {{_trim trimspace}}',
-                access: ['user']
-              }
-            ]
-          }
+          res
         )
         .then(() => {
           expect(res.data.queries).toEqual([
@@ -262,7 +266,7 @@ describe('Supersequel', () => {
           definitions: [
             {
               name: 'nested',
-              expression: [
+              statement: [
                 'UPDATE users SET ',
                 '{{#_trim ", "}}',
                 '{{#each fields}}',

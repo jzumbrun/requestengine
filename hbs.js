@@ -11,13 +11,13 @@ class Factory {
   /**
    * Compile
    * Allows us to override the escape expression just for this compile call.
-   * @param {string} expression
+   * @param {string} statement
    * @param {object} data
    */
-  compile(expression, data) {
+  compile(statement, data) {
     this.escaped = [];
     this.registerEscapeExpression();
-    let compiled = this.instance.compile(expression)(data);
+    let compiled = this.instance.compile(statement)(data);
     this.unRegisterEscapeExpression();
     return compiled;
   }
