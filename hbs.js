@@ -16,6 +16,7 @@ class Factory {
    */
   compile (statement, data) {
     this.escaped = []
+    statement = statement.trim()
     this.registerEscapeExpression()
     const compiled = this.instance.compile(statement)(data)
     this.unRegisterEscapeExpression()

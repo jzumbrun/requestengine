@@ -77,7 +77,7 @@ describe('Supersequel', () => {
               {
                 name: 'sql.star',
                 statement:
-                  'SELECT {{: select}} FROM users',
+                  '\n SELECT {{: select}} FROM users',
                 access: ['user']
               }
             ]
