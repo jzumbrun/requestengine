@@ -47,7 +47,11 @@ class Factory {
     helpers.push({
       functions: {
         ':': value => {
-          const escaped = SqlString.escapeId(value)
+          let escaped = SqlString.escapeId(value)
+          // Allow * to pass
+          if (value[0] === '*') {
+            escaped = value
+          }
           // We do not want escape to run again
           this.escaped.push(escaped)
           return escaped

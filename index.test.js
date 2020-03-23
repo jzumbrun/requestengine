@@ -33,7 +33,7 @@ describe('Supersequel', () => {
               {
                 name: 'sql.injection',
                 statement:
-                  'SELECT {{: select}} FROM users WHERE `id`=105 {{? injection}}',
+                  'SELECT {{: select}} FROM users WHERE `id`={{? html_injection}} {{injection}}',
                 access: ['user']
               }
             ]
@@ -48,8 +48,9 @@ describe('Supersequel', () => {
                 {
                   name: 'sql.injection',
                   properties: {
-                    select: ['id'],
-                    injection: 'OR 1=1;'
+                    select: ['DELETE FROM users'],
+                    html_injection: "<script src='thing.com' />",
+                    injection: "OR 1=1; 'OR 1=1;'"
                   }
                 }
               ]
@@ -59,7 +60,67 @@ describe('Supersequel', () => {
         )
         .then(() => {
           expect(res.data.queries[0].results).toEqual(
-            "SELECT `id` FROM users WHERE `id`=105 'OR 1&#x3D;1;'"
+            "SELECT `DELETE FROM users` FROM users WHERE `id`='&lt;script src&#x3D;&#x27;thing.com&#x27; /&gt;' 'OR 1=1; \\'OR 1=1;\\''"
+          )
+          done()
+        })
+        .catch(error => {
+          done(error)
+        })
+    })
+
+    it('sql start', done => {
+      supersequel
+        .middleware(
+          {
+            definitions: [
+              {
+                name: 'sql.star',
+                statement:
+                  'SELECT {{: select}} FROM users',
+                access: ['user']
+              }
+            ]
+          })(
+          {
+            user: {
+              id: 123,
+              access: ['user']
+            },
+            body: {
+              queries: [
+                {
+                  name: 'sql.star',
+                  properties: {
+                    select: '*'
+                  }
+                },
+                {
+                  name: 'sql.star',
+                  properties: {
+                    select: ['*']
+                  }
+                },
+                {
+                  name: 'sql.star',
+                  properties: {
+                    select: 'id'
+                  }
+                }
+              ]
+            }
+          },
+          res
+        )
+        .then(() => {
+          expect(res.data.queries[0].results).toEqual(
+            'SELECT * FROM users'
+          )
+          expect(res.data.queries[1].results).toEqual(
+            'SELECT * FROM users'
+          )
+          expect(res.data.queries[2].results).toEqual(
+            'SELECT `id` FROM users'
           )
           done()
         })
