@@ -20,10 +20,9 @@
   "author": "Jon Zumbrun",
   "license": "MIT",
   "dependencies": {
-    "ajv": "^6.10.2",
-    "handlebars": "^4.5.3",
-    "lodash": "4.17.15",
-    "sqlstring": "2.3.1"
+    "ajv": "6.10.2",
+    "handlebars": "4.5.3",
+    "lodash": "4.17.15"
   },
   "peerDependencies": {},
   "devDependencies": {

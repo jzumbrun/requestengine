@@ -1,5 +1,5 @@
 const Handlebars = require('handlebars')
-const SqlString = require('sqlstring')
+const sqlstring = require('./sqlstring').factory()
 
 class Factory {
   constructor () {
@@ -28,7 +28,7 @@ class Factory {
    */
   registerEscapeExpression () {
     this.instance.Utils.escapeExpression = value => {
-      if (this.escaped.indexOf(value) === -1) return SqlString.escape(value)
+      if (this.escaped.indexOf(value) === -1) return sqlstring.escape(value)
       return value
     }
   }
@@ -48,7 +48,7 @@ class Factory {
     helpers.push({
       functions: {
         ':': value => {
-          let escaped = SqlString.escapeId(value)
+          let escaped = sqlstring.escapeId(value)
           // Allow * to pass
           if (value[0] === '*') {
             escaped = value

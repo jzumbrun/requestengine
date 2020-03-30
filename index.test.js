@@ -25,6 +25,47 @@ describe('Supersequel', () => {
       }
     }
 
+    it.only('sql json', done => {
+      supersequel
+        .middleware(
+          {
+            definitions: [
+              {
+                name: 'sql.json',
+                statement: 'UPDATE users SET `json`={{json}}',
+                access: ['user']
+              }
+            ]
+          })(
+          {
+            user: {
+              id: 123,
+              access: ['user']
+            },
+            body: {
+              queries: [
+                {
+                  name: 'sql.json',
+                  properties: {
+                    json: '["user"]'
+                  }
+                }
+              ]
+            }
+          },
+          res
+        )
+        .then(() => {
+          expect(res.data.queries[0].results).toEqual(
+            'UPDATE users SET `json`=\'["user"]\''
+          )
+          done()
+        })
+        .catch(error => {
+          done(error)
+        })
+    })
+
     it('sql injection', done => {
       supersequel
         .middleware(
