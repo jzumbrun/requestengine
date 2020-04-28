@@ -1,6 +1,6 @@
 {
   "name": "@elseblock/supersequel",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "MySQL paralell request api, using plain SQL statements built by handlebar templates, validated by json schema.",
   "main": "./index.js",
   "repository": {
