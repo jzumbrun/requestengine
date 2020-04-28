@@ -4,7 +4,7 @@ const hbs = require('./hbs')
 
 class Superqequel {
   constructor (config = {}) {
-    this.hbs = hbs()
+    this.hbs = hbs(config.engine)
     this.hbs.registerHelpers(config.helpers)
 
     config.definitions = config.definitions || []

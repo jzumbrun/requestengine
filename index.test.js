@@ -1,19 +1,26 @@
 const mocha = require('mocha')
 const _ = require('lodash')
 const expect = require('expect')
+const queryStatement = statement => {
+  return new Promise((resolve) => {
+    const number = parseInt(statement)
+    if (parseInt(statement) > -1) {
+      setTimeout(() => {
+        resolve(statement)
+      }, number)
+    } else resolve(statement)
+  })
+}
 const supersequel = require('./index')({
   helpers: [{ functions: _, prefix: '_' }],
   release: () => null,
-  query: statement => {
-    return new Promise((resolve) => {
-      const number = parseInt(statement)
-      if (parseInt(statement) > -1) {
-        setTimeout(() => {
-          resolve(statement)
-        }, number)
-      } else resolve(statement)
-    })
-  }
+  query: queryStatement
+})
+
+const supersequelSqlite = require('./index')({
+  engine: 'sqlite',
+  helpers: [{ functions: _, prefix: '_' }],
+  query: queryStatement
 })
 const { describe, it } = mocha
 
@@ -25,7 +32,7 @@ describe('Supersequel', () => {
       }
     }
 
-    it.only('sql json', done => {
+    it('sql json', done => {
       supersequel
         .middleware(
           {
@@ -57,7 +64,7 @@ describe('Supersequel', () => {
         )
         .then(() => {
           expect(res.data.queries[0].results).toEqual(
-            'UPDATE users SET `json`=\'["user"]\''
+            "UPDATE users SET `json`='[\\\"user\\\"]'"
           )
           done()
         })
@@ -102,6 +109,50 @@ describe('Supersequel', () => {
         .then(() => {
           expect(res.data.queries[0].results).toEqual(
             "SELECT `DELETE FROM users` FROM users WHERE `id`='&lt;script src&#x3D;&#x27;thing.com&#x27; /&gt;' 'OR 1=1; \\'OR 1=1;\\''"
+          )
+          done()
+        })
+        .catch(error => {
+          done(error)
+        })
+    })
+
+    it('sql injection - sqlite', done => {
+      supersequelSqlite
+        .middleware(
+          {
+            definitions: [
+              {
+                name: 'sql.injection',
+                statement:
+                  'SELECT {{: select}} FROM users WHERE `id`={{? html_injection}} {{injection}}',
+                access: ['user']
+              }
+            ]
+          })(
+          {
+            user: {
+              id: 123,
+              access: ['user']
+            },
+            body: {
+              queries: [
+                {
+                  name: 'sql.injection',
+                  properties: {
+                    select: ['DELETE FROM users'],
+                    html_injection: "<script src='thing.com' />",
+                    injection: "OR 1=1; 'OR 1=1;'"
+                  }
+                }
+              ]
+            }
+          },
+          res
+        )
+        .then(() => {
+          expect(res.data.queries[0].results).toEqual(
+            "SELECT `DELETE FROM users` FROM users WHERE `id`='&lt;script src&#x3D;&#x27;thing.com&#x27; /&gt;' 'OR 1=1; ''OR 1=1;'''"
           )
           done()
         })

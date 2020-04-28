@@ -22,35 +22,32 @@ Copyright (c) 2012 Felix Geisendörfer (felix@debuggable.com) and contributors
  */
 
 class SqlString {
-  constructor (engine = 'sqlite') {
+  constructor (engine = 'mysql') {
     this.idGlobalRegexp = /`/g
     this.qualGlobalRegexp = /\./g
 
-    // Defaults to sqlite escape
-    this.charsGlobalRegexp = /[']/g
+    // Other non sqlite engines
+    this.charsGlobalRegexp = /[\0\b\t\n\r\x1a\"\'\\]/g // eslint-disable-line
     this.charsEscapeMap = {
-      '\'': '\'\''
+      '\0': '\\0',
+      '\b': '\\b',
+      '\t': '\\t',
+      '\n': '\\n',
+      '\r': '\\r',
+      '\x1a': '\\Z',
+      '"': '\\"',
+      '\'': '\\\'',
+      '\\': '\\\\'
     }
 
     // Other non sqlite engines
-    if (engine !== 'sqlite') {
-      this.charsGlobalRegexp = /[\0\b\t\n\r\x1a\"\'\\]/g // eslint-disable-line
+    if (engine === 'sqlite') {
+      // Defaults to sqlite escape
+      this.charsGlobalRegexp = /[']/g
       this.charsEscapeMap = {
-        '\0': '\\0',
-        '\b': '\\b',
-        '\t': '\\t',
-        '\n': '\\n',
-        '\r': '\\r',
-        '\x1a': '\\Z',
-        '"': '\\"',
-        '\'': '\\\'',
-        '\\': '\\\\'
+        '\'': '\'\''
       }
     }
-  }
-
-  static factory () {
-    return new SqlString()
   }
 
   escapeId (val, forbidQualified) {
@@ -275,4 +272,6 @@ class SqlString {
   }
 }
 
-module.exports = SqlString
+module.exports = (engine) => {
+  return new SqlString(engine)
+}
