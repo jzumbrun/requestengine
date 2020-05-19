@@ -8,7 +8,7 @@
     "url": "https://github.com/jzumbrun/supersequel.git"
   },
   "scripts": {
-    "push": "npm version patch && npm publish",
+    "prepublish": "npm version patch",
     "test": "standard --fix && NODE_ENV=testing mocha ./index.test.js"
   },
   "keywords": [
