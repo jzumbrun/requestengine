@@ -1,12 +1,9 @@
 const Ajv = require('ajv')
 const intersection = require('lodash/intersection')
-const hbs = require('./hbs')
+const Hbs = require('./hbs')
 
 class Superqequel {
   constructor (config = {}) {
-    this.hbs = hbs(config.engine)
-    this.hbs.registerHelpers(config.helpers)
-
     config.definitions = config.definitions || []
     config.env = process.env.NODE_ENV || 'production'
     config.query = config.query || null
@@ -64,6 +61,10 @@ class Superqequel {
           statement: {
             type: 'string',
             default: ''
+          },
+          alias: {
+            type: 'object',
+            default: {}
           },
           properties: {
             type: 'object',
@@ -125,12 +126,16 @@ class Superqequel {
    * @param {array} history
    * @return Promise
    */
-  query (request, definition, config, user = {}, history = {}) {
-    const statement = this.hbs.compile(definition.statement, {
+  query (request, definition, config, history = {}) {
+    const hbs = new Hbs(config.engine)
+    const data = {
       ...(request.properties || {}),
-      $user: user,
-      $history: history
-    })
+      $user: config.user,
+      $history: history,
+      $definition: definition
+    }
+    hbs.registerHelpers(config.helpers)
+    const statement = hbs.compile(definition.statement, data)
     return config.query(statement)
   }
 
@@ -191,6 +196,8 @@ class Superqequel {
 
     // Set config defaults
     config.env = config.env || this.config.env
+    config.engine = config.engine || this.config.engine
+    config.helpers = config.helpers || this.config.helpers
     config.definitions = config.definitions || this.config.definitions
     config.query = config.query || this.config.query
     config.release = config.release || this.config.release
@@ -257,7 +264,6 @@ class Superqequel {
             query,
             definition,
             config,
-            config.user,
             history
           )
             .then(rows => {

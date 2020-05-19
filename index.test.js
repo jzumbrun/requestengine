@@ -12,7 +12,7 @@ const queryStatement = statement => {
   })
 }
 const supersequel = require('./index')({
-  helpers: [{ functions: _, prefix: '_' }],
+  helpers: [{ functions: _, prefix: '_', context: false }],
   release: () => null,
   query: queryStatement
 })
@@ -81,7 +81,7 @@ describe('Supersequel', () => {
               {
                 name: 'sql.injection',
                 statement:
-                  'SELECT {{: select}} FROM users WHERE `id`={{? html_injection}} {{injection}}',
+                  'SELECT {{:id select}} FROM users WHERE `id`={{:ht htmlInjection}} {{injection}}',
                 access: ['user']
               }
             ]
@@ -97,7 +97,7 @@ describe('Supersequel', () => {
                   name: 'sql.injection',
                   properties: {
                     select: ['DELETE FROM users'],
-                    html_injection: "<script src='thing.com' />",
+                    htmlInjection: "<script src='thing.com' />",
                     injection: "OR 1=1; 'OR 1=1;'"
                   }
                 }
@@ -125,7 +125,7 @@ describe('Supersequel', () => {
               {
                 name: 'sql.injection',
                 statement:
-                  'SELECT {{: select}} FROM users WHERE `id`={{? html_injection}} {{injection}}',
+                  'SELECT {{:id select}} FROM users WHERE `id`={{:ht htmlInjection}} {{injection}}',
                 access: ['user']
               }
             ]
@@ -141,7 +141,7 @@ describe('Supersequel', () => {
                   name: 'sql.injection',
                   properties: {
                     select: ['DELETE FROM users'],
-                    html_injection: "<script src='thing.com' />",
+                    htmlInjection: "<script src='thing.com' />",
                     injection: "OR 1=1; 'OR 1=1;'"
                   }
                 }
@@ -169,7 +169,7 @@ describe('Supersequel', () => {
               {
                 name: 'sql.star',
                 statement:
-                  '\n SELECT {{: select}} FROM users',
+                  'SELECT {{:id select}} FROM users',
                 access: ['user']
               }
             ]
@@ -422,7 +422,7 @@ describe('Supersequel', () => {
                 '{{#_trim ", "}}',
                 '{{#each fields}}',
                 '{{#unless (_eq @key "id")}}',
-                '{{: @key}}={{#if (_isString this)}}{{_trim this}}, {{else}}{{this}}, {{/if}}',
+                '{{:id @key}}={{#if (_isString this)}}{{_trim this}}, {{else}}{{this}}, {{/if}}',
                 '{{/unless}}',
                 '{{/each}}',
                 '{{/_trim}}'
@@ -437,6 +437,94 @@ describe('Supersequel', () => {
               id: '1',
               name: 'nested',
               results: "UPDATE users SET `column1`=3, `column2`='hello'"
+            }
+          ])
+          done()
+        })
+        .catch(error => {
+          done(error)
+        })
+    })
+
+    it('alias', done => {
+      supersequel
+        .execute({
+          user: {
+            id: 123,
+            access: ['user']
+          },
+          queries: [
+            {
+              name: 'alias',
+              properties: {
+                firstName: 'Abe',
+                lastName: 'Lincoln',
+                email: 'able@lincoln.com',
+                select: ['lastName']
+              }
+            }
+          ],
+          definitions: [
+            {
+              name: 'alias',
+              alias: {
+                firstName: 'first_name',
+                lastName: 'last_name'
+              },
+              statement: 'SELECT {{:id select}} from users where first_name={{firstName}}',
+              access: ['user']
+            }
+          ]
+        })
+        .then(({ queries }) => {
+          expect(queries).toEqual([
+            {
+              name: 'alias',
+              results: "SELECT `last_name` from users where first_name='Abe'"
+            }
+          ])
+          done()
+        })
+        .catch(error => {
+          done(error)
+        })
+    })
+
+    it('alias - as', done => {
+      supersequel
+        .execute({
+          user: {
+            id: 123,
+            access: ['user']
+          },
+          queries: [
+            {
+              name: 'alias',
+              properties: {
+                firstName: 'Abe',
+                lastName: 'Lincoln',
+                email: 'able@lincoln.com',
+                select: ['lastName']
+              }
+            }
+          ],
+          definitions: [
+            {
+              name: 'alias',
+              alias: {
+                firstName: 'first_name',
+                lastName: 'last_name'
+              },
+              statement: 'SELECT {{:as select}} from users where first_name={{firstName}}',
+              access: ['user']
+            }
+          ]
+        })
+        .then(({ queries }) => {
+          expect(queries).toEqual([
+            {
+              name: 'alias',
+              results: "SELECT `last_name` as `lastName` from users where first_name='Abe'"
             }
           ])
           done()
