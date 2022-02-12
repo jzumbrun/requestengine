@@ -20,7 +20,7 @@
   "author": "Jon Zumbrun",
   "license": "MIT",
   "dependencies": {
-    "ajv": "6.10.2",
+    "ajv": "6.12.3",
     "handlebars": "4.5.3",
     "lodash": "4.17.15"
   },
