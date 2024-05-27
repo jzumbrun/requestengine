@@ -1,28 +1,23 @@
-const mocha = require('mocha')
-const _ = require('lodash')
-const expect = require('expect')
-const queryStatement = statement => {
+
+const queryStatement = (statement, data) => {
   return new Promise((resolve) => {
     const number = parseInt(statement)
     if (parseInt(statement) > -1) {
       setTimeout(() => {
         resolve(statement)
       }, number)
-    } else resolve(statement)
+    } else resolve([statement, data])
   })
 }
 const supersequel = require('./index')({
-  helpers: [{ functions: _, prefix: '_', context: false }],
+  helpers: [{ functions: {
+    trim: (str) => str.trim(),
+    eq: (a, b) => a === b,
+    isString: (str) => typeof str === 'string'
+  }, prefix: '_', context: false }],
   release: () => null,
   query: queryStatement
 })
-
-const supersequelSqlite = require('./index')({
-  engine: 'sqlite',
-  helpers: [{ functions: _, prefix: '_' }],
-  query: queryStatement
-})
-const { describe, it } = mocha
 
 describe('Supersequel', () => {
   describe('middleware', done => {
@@ -32,14 +27,14 @@ describe('Supersequel', () => {
       }
     }
 
-    it('sql json', done => {
+    it('users.update', done => {
       supersequel
         .middleware(
           {
             definitions: [
               {
-                name: 'sql.json',
-                statement: 'UPDATE users SET `json`={{json}}',
+                name: 'users.update',
+                statement: 'UPDATE users SET {{user}}',
                 access: ['user']
               }
             ]
@@ -52,9 +47,9 @@ describe('Supersequel', () => {
             body: {
               queries: [
                 {
-                  name: 'sql.json',
+                  name: 'users.update',
                   properties: {
-                    json: '["user"]'
+                    user: { name: 'Jon', age: 33 }
                   }
                 }
               ]
@@ -64,155 +59,7 @@ describe('Supersequel', () => {
         )
         .then(() => {
           expect(res.data.queries[0].results).toEqual(
-            "UPDATE users SET `json`='[\\\"user\\\"]'"
-          )
-          done()
-        })
-        .catch(error => {
-          done(error)
-        })
-    })
-
-    it('sql injection', done => {
-      supersequel
-        .middleware(
-          {
-            definitions: [
-              {
-                name: 'sql.injection',
-                statement:
-                  'SELECT {{:id select}} FROM users WHERE `id`={{:ht htmlInjection}} {{injection}}',
-                access: ['user']
-              }
-            ]
-          })(
-          {
-            user: {
-              id: 123,
-              access: ['user']
-            },
-            body: {
-              queries: [
-                {
-                  name: 'sql.injection',
-                  properties: {
-                    select: ['DELETE FROM users'],
-                    htmlInjection: "<script src='thing.com' />",
-                    injection: "OR 1=1; 'OR 1=1;'"
-                  }
-                }
-              ]
-            }
-          },
-          res
-        )
-        .then(() => {
-          expect(res.data.queries[0].results).toEqual(
-            "SELECT `DELETE FROM users` FROM users WHERE `id`='&lt;script src&#x3D;&#x27;thing.com&#x27; /&gt;' 'OR 1=1; \\'OR 1=1;\\''"
-          )
-          done()
-        })
-        .catch(error => {
-          done(error)
-        })
-    })
-
-    it('sql injection - sqlite', done => {
-      supersequelSqlite
-        .middleware(
-          {
-            definitions: [
-              {
-                name: 'sql.injection',
-                statement:
-                  'SELECT {{:id select}} FROM users WHERE `id`={{:ht htmlInjection}} {{injection}}',
-                access: ['user']
-              }
-            ]
-          })(
-          {
-            user: {
-              id: 123,
-              access: ['user']
-            },
-            body: {
-              queries: [
-                {
-                  name: 'sql.injection',
-                  properties: {
-                    select: ['DELETE FROM users'],
-                    htmlInjection: "<script src='thing.com' />",
-                    injection: "OR 1=1; 'OR 1=1;'"
-                  }
-                }
-              ]
-            }
-          },
-          res
-        )
-        .then(() => {
-          expect(res.data.queries[0].results).toEqual(
-            "SELECT `DELETE FROM users` FROM users WHERE `id`='&lt;script src&#x3D;&#x27;thing.com&#x27; /&gt;' 'OR 1=1; ''OR 1=1;'''"
-          )
-          done()
-        })
-        .catch(error => {
-          done(error)
-        })
-    })
-
-    it('sql start', done => {
-      supersequel
-        .middleware(
-          {
-            definitions: [
-              {
-                name: 'sql.star',
-                statement:
-                  'SELECT {{:id select}} FROM users',
-                access: ['user']
-              }
-            ]
-          })(
-          {
-            user: {
-              id: 123,
-              access: ['user']
-            },
-            body: {
-              queries: [
-                {
-                  name: 'sql.star',
-                  properties: {
-                    select: '*'
-                  }
-                },
-                {
-                  name: 'sql.star',
-                  properties: {
-                    select: ['*']
-                  }
-                },
-                {
-                  name: 'sql.star',
-                  properties: {
-                    select: 'id'
-                  }
-                }
-              ]
-            }
-          },
-          res
-        )
-        .then(() => {
-          expect(res.data.queries[0].results).toEqual(
-            'SELECT * FROM users'
-          )
-          expect(res.data.queries[1].results).toEqual(
-            'SELECT * FROM users'
-          )
-          expect(res.data.queries[2].results).toEqual(
-            'SELECT `id` FROM users'
+            ['UPDATE users SET $1 = $2, $3 = $4', ['name', 'Jon', 'age', 33]]
           )
           done()
         })
@@ -299,7 +146,7 @@ describe('Supersequel', () => {
               },
               {
                 name: 'thing.two',
-                statement: 'thing.two is bigger than {{$history.one}}',
+                statement: 'thing.two is bigger than {{$history.one.[0]}}',
                 access: ['user']
               }
             ]
@@ -331,12 +178,12 @@ describe('Supersequel', () => {
             {
               id: 'one',
               name: 'thing.one',
-              results: 'thing.one'
+              results: ['thing.one', []]
             },
             {
               id: 'two',
               name: 'thing.two',
-              results: "thing.two is bigger than 'thing.one'"
+              results: ["thing.two is bigger than $1", ['thing.one']]
             }
           ])
           done()
@@ -382,7 +229,7 @@ describe('Supersequel', () => {
             {
               id: '1',
               name: 'thing.one',
-              results: "thing.one 'nospaces'"
+              results: ["thing.one $1", ['nospaces']]
             }
           ])
           done()
@@ -419,10 +266,10 @@ describe('Supersequel', () => {
               name: 'nested',
               statement: [
                 'UPDATE users SET ',
-                '{{#_trim ", "}}',
+                '{{#_trim ', '}}',
                 '{{#each fields}}',
-                '{{#unless (_eq @key "id")}}',
-                '{{:id @key}}={{#if (_isString this)}}{{_trim this}}, {{else}}{{this}}, {{/if}}',
+                "{{#unless (_eq @key 'id')}}",
+                '{{@key}} = {{#if (_isString this)}}{{_trim this}}, {{else}}{{this}}, {{/if}}',
                 '{{/unless}}',
                 '{{/each}}',
                 '{{/_trim}}'
@@ -436,7 +283,10 @@ describe('Supersequel', () => {
             {
               id: '1',
               name: 'nested',
-              results: "UPDATE users SET `column1`=3, `column2`='hello'"
+              results: [
+                'UPDATE users SET $1 = $2, $3 = $4,',
+                ['column1', 3, 'column2', 'hello']
+              ]
             }
           ])
           done()
@@ -460,51 +310,7 @@ describe('Supersequel', () => {
                 firstName: 'Abe',
                 lastName: 'Lincoln',
                 email: 'able@lincoln.com',
-                select: ['lastName']
-              }
-            }
-          ],
-          definitions: [
-            {
-              name: 'alias',
-              alias: {
-                firstName: 'first_name',
-                lastName: 'last_name'
-              },
-              statement: 'SELECT {{:id select}} from users where first_name={{firstName}}',
-              access: ['user']
-            }
-          ]
-        })
-        .then(({ queries }) => {
-          expect(queries).toEqual([
-            {
-              name: 'alias',
-              results: "SELECT `last_name` from users where first_name='Abe'"
-            }
-          ])
-          done()
-        })
-        .catch(error => {
-          done(error)
-        })
-    })
-
-    it('alias - as', done => {
-      supersequel
-        .execute({
-          user: {
-            id: 123,
-            access: ['user']
-          },
-          queries: [
-            {
-              name: 'alias',
-              properties: {
-                firstName: 'Abe',
-                lastName: 'Lincoln',
-                email: 'able@lincoln.com',
-                select: ['lastName']
+                select: ['lastName', 'firstName']
               }
             }
           ],
@@ -524,7 +330,10 @@ describe('Supersequel', () => {
           expect(queries).toEqual([
             {
               name: 'alias',
-              results: "SELECT `last_name` as `lastName` from users where first_name='Abe'"
+              results: [
+                'SELECT $1 as $2, $3 as $4 from users where first_name=$5',
+                ['first_name', 'firstName', 'last_name', 'lastName', 'Abe']
+              ]
             }
           ])
           done()

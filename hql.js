@@ -1,16 +1,15 @@
 const Handlebars = require('handlebars')
-const isObject = require('lodash/isObject')
-const isArray = require('lodash/isArray')
-const isFunction = require('lodash/isFunction')
 const get = require('lodash/get')
-const sqlstring = require('./sqlstring')
 
-class Hbs {
+/**
+ * Hql
+ * (H)andebars s(ql)
+ */
+class Hql {
   constructor (engine) {
-    this.sqlstring = sqlstring(engine)
     this.instance = Handlebars.create()
     this.HTMLEscapeExpression = this.instance.Utils.escapeExpression
-    this.escaped = []
+    this.params = []
   }
 
   /**
@@ -20,7 +19,7 @@ class Hbs {
    * @param {object} data
    */
   compile (statement, data) {
-    this.escaped = []
+    this.params = []
     this.registerEscapeExpression()
     const compiled = this.instance.compile(statement)(data)
     this.unRegisterEscapeExpression()
@@ -32,9 +31,29 @@ class Hbs {
    */
   registerEscapeExpression () {
     this.instance.Utils.escapeExpression = value => {
-      if (this.escaped.indexOf(value) === -1) return this.sqlstring.escape(value)
-      return value
+      return this.parameterize(value)
     }
+  }
+
+  parameterize(value) {
+
+    if (typeof value === 'object') {
+      if (Array.isArray(value)) {
+        return this.arrayToList(value)
+      } 
+      else if (value.__alias__) {
+        return this.objectToAlias(value)
+      } else {
+        return this.objectToValues(value)
+      }
+    } else {
+      const index = this.params.indexOf(value)
+      if (index > -1) return '$' + (index + 1)
+
+      this.params.push(value)
+      return '$' + this.params.length
+    }
+    
   }
 
   /**
@@ -44,43 +63,44 @@ class Hbs {
     this.instance.Utils.escapeExpression = this.HTMLEscapeExpression
   }
 
-  /**
-   * Alias the object props but let them
-   * fall through to the sqlstring.objectToValues
-   */
-  aliasObjects (alias, value) {
-    const cloned = Object.assign({}, value)
-    for (const a in alias) {
-      if (a in cloned) {
-        cloned[alias[a]] = cloned[a]
-        delete cloned[a]
+  arrayToList (array) {
+    let sql = ''
+
+    array.forEach((val, i) => {
+      if (Array.isArray(val)) {
+        sql += (i === 0 ? '' : ', ') + '(' + this.arrayToList(val) + ')'
+      } else {
+        sql += (i === 0 ? '' : ', ') + this.parameterize(val)
       }
-    }
-    return cloned
+    })
+
+    return sql
   }
 
-  /**
-   * Escape the column identifiers, aka field names
-   */
-  escapeId (alias, value, aliasSelect = false) {
-    let escaped = this.sqlstring.escapeId(value)
+  objectToAlias (object) {
+    return this.parameterize(object.__alias__.column) + ' as ' + this.parameterize(object.__alias__.alias)
+  }
 
-    for (const a in alias) {
-      // Select statement alias
-      if (aliasSelect) {
-        escaped = escaped.replace(new RegExp(`\`${a}\``, 'g'), `\`${alias[a]}\` as \`${a}\``)
-      } else {
-        escaped = escaped.replace(new RegExp(`\`${a}\``, 'g'), `\`${alias[a]}\``)
-      }
+  objectToValues (object) {
+    let sql = ''
+
+    for (const key in object) {
+      sql += (sql.length === 0 ? '' : ', ') + this.parameterize(key) + ' = ' + this.parameterize(object[key])
     }
 
-    // Allow * to pass
-    if (value[0] === '*') {
-      escaped = value
+    return sql
+  }
+
+  alias (aliases, value) {
+    let aliasValue = []
+    value = Array.isArray(value) ? value : [value]
+    for (const alias in aliases) {
+      const column = aliases[alias]
+      value.forEach((val) => {
+        if(val === alias) aliasValue.push({ __alias__: { alias, column }})
+      })
     }
-    // We do not want escape to run again
-    this.escaped.push(escaped)
-    return escaped
+    return (aliasValue.length === 1) ? aliasValue[0] : aliasValue 
   }
 
   /**
@@ -89,46 +109,42 @@ class Hbs {
    */
   registerHelpers (helpers = []) {
     const $this = this
+    const instance = $this.instance
     helpers.push({
       prefix: ':',
       functions: {
-        // Alias Input/Update statements
-        id: function (value, context) {
-          if (!isArray(value) && isObject(value)) { return $this.aliasObjects(context.data.root.$definition.alias, value) }
-          return $this.escapeId(context.data.root.$definition.alias, value)
-        },
         // Alias Select statements
         as: function (value, context) {
-          return $this.escapeId(context.data.root.$definition.alias, value, true)
+          return $this.alias(context.data.root.$definition.alias, value, true)
         },
         ht: function (value, context) {
           return $this.HTMLEscapeExpression(value)
         }
       }
     })
-
+    
     for (const helper of helpers) {
       // Set defaults
       helper.functions = helper.functions || []
       helper.prefix = helper.prefix || ''
-      helper.context = get(helper, 'context', true)
+      helper.context = helper?.context ?? true
 
       // Register a helper for every function
       for (const funk in helper.functions) {
-        if (isFunction(helper.functions[funk])) {
+        if (instance.Utils.isFunction(helper.functions[funk])) {
           if (helper.context) {
             // Native handlebars context use
-            this.instance.registerHelper(`${helper.prefix}${funk}`, helper.functions[funk])
+            instance.registerHelper(`${helper.prefix}${funk}`, helper.functions[funk])
           } else {
             // Remove context from `this` and first arg
             // Useful for black box functions like lodash/underscore
-            this.instance.registerHelper(`${helper.prefix}${funk}`, function (
+            instance.registerHelper(`${helper.prefix}${funk}`, function (
               ...args
             ) {
               // Take handlebar's context from the beginning
               const context = args.pop()
               // Are we dealing with a block?
-              if (isFunction(context.fn)) {
+              if (instance.Utils.isFunction(context.fn)) {
                 return helper.functions[funk](context.fn(this), ...args)
               }
               return helper.functions[funk](...args)
@@ -140,4 +156,4 @@ class Hbs {
   }
 }
 
-module.exports = Hbs
+module.exports = Hql

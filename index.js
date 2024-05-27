@@ -1,6 +1,6 @@
 const Ajv = require('ajv')
 const intersection = require('lodash/intersection')
-const Hbs = require('./hbs')
+const Hql = require('./hql')
 
 class Superqequel {
   constructor (config = {}) {
@@ -127,16 +127,16 @@ class Superqequel {
    * @return Promise
    */
   query (request, definition, config, history = {}) {
-    const hbs = new Hbs(config.engine)
+    const hql = new Hql(config.engine)
     const data = {
       ...(request.properties || {}),
       $user: config.user,
       $history: history,
       $definition: definition
     }
-    hbs.registerHelpers(config.helpers)
-    const statement = hbs.compile(definition.statement, data)
-    return config.query(statement)
+    hql.registerHelpers(config.helpers)
+    const statement = hql.compile(definition.statement, data)
+    return config.query(statement, hql.params)
   }
 
   /**
