@@ -1,22 +1,28 @@
-const Ajv = require('ajv')
-const intersection = require('lodash/intersection')
-const Hql = require('./hql')
+import Ajv from 'ajv'
+import Hql from './hql'
+import type { IConfig, IDefinition, IError, 
+  IHistory, IRequest, IResponse, IQueryName } from '../types'
 
 class Superqequel {
-  constructor (config = {}) {
+  config: IConfig
+
+  constructor (config: IConfig) {
     config.definitions = config.definitions || []
     config.env = process.env.NODE_ENV || 'production'
-    config.query = config.query || null
-    config.release = config.release || null
+    config.query = config.query || undefined
+    config.release = config.release || undefined
     this.config = config
+  }
+
+  intersects (a: any[], b: any[]): boolean {
+    const setA = new Set(a);
+    return b.some(value => setA.has(value));
   }
 
   /**
    * Validate Request
-   * @param {object} request
-   * @param {Ajv} inboundAjv
    */
-  validateRequest (request = {}, inboundAjv) {
+  validateRequest (request: IRequest, inboundAjv: Ajv): boolean {
     return inboundAjv.validate(
       {
         type: 'object',
@@ -46,10 +52,8 @@ class Superqequel {
 
   /**
    * Validate Query Definition
-   * @param {object} definition
-   * @param {Ajv} inboundAjv
    */
-  validateQueryDefinition (definition = {}, inboundAjv) {
+  validateQueryDefinition (definition: IDefinition, inboundAjv: Ajv): boolean {
     return inboundAjv.validate(
       {
         type: 'object',
@@ -91,13 +95,8 @@ class Superqequel {
 
   /**
    * Outbound
-   * @param {object} response
-   * @param {object} request
-   * @param {array} rows
-   * @param {object} definition
-   * @param {object} history
    */
-  outbound (response, request, rows, definition, history) {
+  outbound (response: IResponse, request: IRequest, rows: unknown, definition: IDefinition, history: IHistory): void {
     const outboundAjv = new Ajv({ useDefaults: true, removeAdditional: 'all' })
 
     // Do we have proper outbound query schema
@@ -119,15 +118,10 @@ class Superqequel {
 
   /**
    * Query
-   * @param {object} request
-   * @param {object} definition
-   * @param {object} config
-   * @param {object} user
-   * @param {array} history
-   * @return Promise
    */
-  query (request, definition, config, history = {}) {
-    const hql = new Hql(config.engine)
+  query (request: IRequest, definition: IDefinition, config: IConfig, history: IHistory = {}): Promise<unknown> {
+
+    const hql = new Hql()
     const data = {
       ...(request.properties || {}),
       $user: config.user,
@@ -136,28 +130,25 @@ class Superqequel {
     }
     hql.registerHelpers(config.helpers)
     const statement = hql.compile(definition.statement, data)
-    return config.query(statement, hql.params)
+    if (!config.query) throw new Error('config.query is required in either the main or middleware config.')
+    return config.query(statement, hql.getParams())
   }
 
   /**
    * Get Request Name
    * @param {object} request
    */
-  getQueryName (request) {
+  getQueryName (request: IRequest): IQueryName {
     if (request.id) return { id: request.id, name: request.name }
     return { name: request.name }
   }
 
   /**
    * Query Error
-   * @param {object} error
-   * @param {object} request
-   * @param {object} response
-   * @param {object} config
    */
-  queryError (error, request, response, config) {
+  queryError (error: Error, request: IRequest, response: IResponse, config: IConfig): void {
     // Do we have good sql statements?
-    const err = {
+    const err: IError = {
       ...this.getQueryName(request),
       error: { errno: 1006, code: 'ERROR_IMPROPER_QUERY_STATEMENT' }
     }
@@ -172,10 +163,10 @@ class Superqequel {
    * Query middleware
    * @param {object} config
    */
-  middleware (config = {}) {
-    return async (req, res) => {
+  middleware (config: IConfig) {
+    return async (req: IRequest, res: IResponse) => {
       const response = await this.execute({
-        queries: req.body.queries || [],
+        queries: req.body?.queries || [],
         user: req.user,
         ...config
       })
@@ -185,22 +176,20 @@ class Superqequel {
 
   /**
    * Execute queries
-   * @param {object} config
-   * @return {array}
    */
-  async execute (config = {}) {
-    const response = { queries: [] }
+  async execute (config: IConfig): Promise<IResponse> {
+    const response: IResponse = { queries: [], send: () => {} }
     const inboundAjv = new Ajv({ useDefaults: true })
-    const async = []
-    const history = {}
+    const async: Promise<void>[] = []
+    const history: IHistory = {}
 
     // Set config defaults
     config.env = config.env || this.config.env
-    config.engine = config.engine || this.config.engine
     config.helpers = config.helpers || this.config.helpers
     config.definitions = config.definitions || this.config.definitions
     config.query = config.query || this.config.query
     config.release = config.release || this.config.release
+    config.queries = config.queries || []
 
     try {
       for (const query of config.queries) {
@@ -218,7 +207,17 @@ class Superqequel {
         }
 
         // Do we have proper definition query schema?
-        const definition = config.definitions.find(q => q.name === query.name)
+        const definition = config.definitions?.find(q => q.name === query.name)
+
+        // Do we have sql?
+        if (!definition) {
+          response.queries.push({
+            ...this.getQueryName(query),
+            error: { errno: 1002, code: 'ERROR_QUERY_NOT_FOUND' }
+          })
+          continue
+        }
+
         if (!this.validateQueryDefinition(definition, inboundAjv)) {
           response.queries.push({
             ...this.getQueryName(query),
@@ -231,17 +230,8 @@ class Superqequel {
           continue
         }
 
-        // Do we have sql?
-        if (!definition) {
-          response.queries.push({
-            ...this.getQueryName(query),
-            error: { errno: 1002, code: 'ERROR_QUERY_NOT_FOUND' }
-          })
-          continue
-        }
-
         // Do we have access rights?
-        if (!intersection(definition.access, config.user.access).length) {
+        if (!this.intersects(definition.access, config.user?.access || [])) {
           response.queries.push({
             ...this.getQueryName(query),
             error: { errno: 1003, code: 'ERROR_QUERY_NO_ACCESS' }
@@ -266,10 +256,10 @@ class Superqequel {
             config,
             history
           )
-            .then(rows => {
-              this.outbound(response, query, rows, definition, history)
-            })
-            .catch(error => this.queryError(error, query, response, config))
+          .then((rows: unknown) => {
+            this.outbound(response, query, rows, definition, history)
+          })
+          .catch(error => this.queryError(error, query, response, config))
 
           if (query.sync) await queryPromise
           else async.push(queryPromise)
@@ -279,16 +269,16 @@ class Superqequel {
       // Process all of the async queries here
       // The catch was defined above in the creation of the promise
       if (async.length) await Promise.all(async).catch(e => {})
-    } catch (error) {
+    } catch (error: any) {
       // Do we have any uknown issues?
-      const err = { error: { errno: 1007, code: 'ERROR_UNKNOWN' } }
+      const err: IError = { error: { errno: 1007, code: 'ERROR_UNKNOWN' } }
       if (config.env === 'production') response.queries.push(err)
       else {
         err.details = error.message
         response.queries.push(err)
       }
     } finally {
-      if (typeof config.realease === 'function') config.release(response)
+      if (typeof config.release === 'function') config.release(response)
     }
 
     return response
@@ -297,8 +287,8 @@ class Superqequel {
 
 /**
  * Init
- * @param {object} config
  */
-module.exports = (config = {}) => {
+export default (config: IConfig) => {
   return new Superqequel(config)
 }
+

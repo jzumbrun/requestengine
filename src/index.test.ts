@@ -1,5 +1,7 @@
+import { describe, it, expect } from '@jest/globals'
+import initSupersequel from '.'
 
-const queryStatement = (statement, data) => {
+const queryStatement = (statement: string, data: unknown) => {
   return new Promise((resolve) => {
     const number = parseInt(statement)
     if (parseInt(statement) > -1) {
@@ -9,9 +11,9 @@ const queryStatement = (statement, data) => {
     } else resolve([statement, data])
   })
 }
-const supersequel = require('./index')({
+const supersequel = initSupersequel({
   helpers: [{ functions: {
-    trim: (str) => str.trim(),
+    trim: (str: string) => str.trim(),
     eq: (a, b) => a === b,
     isString: (str) => typeof str === 'string'
   }, prefix: '_', context: false }],
@@ -20,9 +22,9 @@ const supersequel = require('./index')({
 })
 
 describe('Supersequel', () => {
-  describe('middleware', done => {
-    const res = {
-      send: response => {
+  describe('middleware', () => {
+    const res: any = {
+      send: (response: unknown) => {
         res.data = response
       }
     }
