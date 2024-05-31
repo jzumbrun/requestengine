@@ -1,7 +1,7 @@
 # supersequel
 
 
-supersequel is a logic-less SQL paralell request api, using plain SQL statements built by handlebar templates, validated by json schema.
+supersequel is a logic-less PostgreSQL parameterized paralell request api, using plain SQL statements built by handlebar templates, validated by json schema.
 
 supersequel, inspired by GraphQL, can wrap up multiple resource requests and mutations into one api call. Thus reducing
 the chattiness of SPAs. Similart to GraphQL, all requests are POSTS regardless of the query actions.
