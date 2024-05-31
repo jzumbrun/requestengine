@@ -18,10 +18,15 @@ export interface IRequest {
   body?: { queries: IQuery[] }
 }
 
+export interface IIdentifier {
+  name: string
+  alias?: string 
+}
+
 export interface IDefinition {
   name: string
   statement: string
-  alias?: Record<string, string>
+  identifiers?: IIdentifier[]
   properties?: any
   inboundSchema?: any
   outboundSchema?: any

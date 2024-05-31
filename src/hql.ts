@@ -1,14 +1,10 @@
 // Import necessary modules
 import Handlebars, { Utils } from 'handlebars'
-import type { IHelper, IDefinition } from '../types'
+import type { IHelper, IDefinition, IIdentifier } from '../types'
 
-interface IAliasParameter {
-  __alias__: {
-    alias: string
-    column: string
-  }
+interface IIdentifierParameter {
+  __identifier__: IIdentifier
 }
-
 
 /**
  * Hql
@@ -29,6 +25,10 @@ export default class Hql {
 
   getParams(): unknown[] {
     return this.params
+  }
+
+  escapeIdentifier (str: string): string {
+    return '"' + str.replace(/"/g, '""') + '"'
   }
 
   /**
@@ -59,8 +59,8 @@ export default class Hql {
     if (typeof value === 'object') {
       if (Array.isArray(value)) {
         return this.arrayToList(value)
-      } else if (value.__alias__) {
-        return this.objectToAlias(value)
+      } else if (value.__identifier__) {
+        return this.objectToIdentifier(value.__identifier__)
       } else {
         return this.objectToValues(value)
       }
@@ -95,14 +95,12 @@ export default class Hql {
   }
 
   /**
-   * Object to Alias
+   * Object to Identifier
    */
-  private objectToAlias(object: IAliasParameter): string {
-    return (
-      this.parameterize(object.__alias__.column) +
-      ' as ' +
-      this.parameterize(object.__alias__.alias)
-    )
+  private objectToIdentifier({ name, alias }: IIdentifierParameter['__identifier__']): string {
+    return (alias)
+      ? `${this.escapeIdentifier(name)} as ${this.escapeIdentifier(alias)}`
+      : `${this.escapeIdentifier(name)}`
   }
 
   /**
@@ -121,20 +119,19 @@ export default class Hql {
   }
 
   /**
-   * Alias
+   * Identifiers
    */
-  public alias(definitionAlias: IDefinition['alias'], value: unknown): unknown {
-    if(!definitionAlias) return value
+  public identifiers(definitionIdentifiers: IDefinition['identifiers'], value: unknown): unknown {
+    if(!definitionIdentifiers) return value
 
-    let aliasValue: IAliasParameter[] = []
+    let identifiers: IIdentifierParameter[] = []
     value = Array.isArray(value) ? value : [value]
-    for (const alias in definitionAlias) {
-      const column = definitionAlias[alias] as string
+    definitionIdentifiers.forEach(({ name, alias }) => {
       (value as unknown[]).forEach((val: unknown) => {
-        if (val === alias) aliasValue.push({ __alias__: { alias, column } })
+        if (val === name || val === alias) identifiers.push({ __identifier__: { name, alias } })
       })
-    }
-    return aliasValue.length === 1 ? aliasValue[0] : aliasValue
+    })
+    return identifiers.length === 1 ? identifiers[0] : identifiers
   }
 
   /**
@@ -146,9 +143,9 @@ export default class Hql {
     helpers.push({
       prefix: ':',
       functions: {
-        // Alias Select statements
-        as: function (value: unknown, context: any) {
-          return $this.alias(context.data.root.$definition.alias, value)
+        // Identifiers Select statements
+        id: function (value: unknown, context: any) {
+          return $this.identifiers(context.data.root.$definition.identifiers, value)
         },
         ht: function (value: unknown) {
           return $this.HTMLEscapeExpression(value as string)
