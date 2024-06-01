@@ -279,7 +279,7 @@ const supersequel = (0, _1.default)({
                 done(error);
             });
         });
-        (0, globals_1.it)('alias', done => {
+        (0, globals_1.it)('identfiers with alias', done => {
             supersequel
                 .execute({
                 user: {
@@ -300,11 +300,11 @@ const supersequel = (0, _1.default)({
                 definitions: [
                     {
                         name: 'alias',
-                        alias: {
-                            firstName: 'first_name',
-                            lastName: 'last_name'
-                        },
-                        statement: 'SELECT {{:as select}} from users where first_name={{firstName}}',
+                        identifiers: [
+                            { name: 'first_name', alias: 'firstName' },
+                            { name: 'last_name', alias: 'lastName' },
+                        ],
+                        statement: 'SELECT {{:id select}} from users where firstName={{firstName}}',
                         access: ['user']
                     }
                 ]
@@ -314,8 +314,54 @@ const supersequel = (0, _1.default)({
                     {
                         name: 'alias',
                         results: [
-                            'SELECT $1 as $2, $3 as $4 from users where first_name=$5',
-                            ['first_name', 'firstName', 'last_name', 'lastName', 'Abe']
+                            'SELECT "first_name" as "firstName", "last_name" as "lastName" from users where firstName=$1',
+                            ['Abe']
+                        ]
+                    }
+                ]);
+                done();
+            })
+                .catch(error => {
+                done(error);
+            });
+        });
+        (0, globals_1.it)('identfiers', done => {
+            supersequel
+                .execute({
+                user: {
+                    id: 123,
+                    access: ['user']
+                },
+                queries: [
+                    {
+                        name: 'alias',
+                        properties: {
+                            first_name: 'Abe',
+                            last_name: 'Lincoln',
+                            email: 'able@lincoln.com',
+                            select: ['last_name', 'first_name']
+                        }
+                    }
+                ],
+                definitions: [
+                    {
+                        name: 'alias',
+                        identifiers: [
+                            { name: 'first_name' },
+                            { name: 'last_name' },
+                        ],
+                        statement: 'SELECT {{:id select}} from users where first_name={{first_name}}',
+                        access: ['user']
+                    }
+                ]
+            })
+                .then(({ queries }) => {
+                (0, globals_1.expect)(queries).toEqual([
+                    {
+                        name: 'alias',
+                        results: [
+                            'SELECT "first_name", "last_name" from users where first_name=$1',
+                            ['Abe']
                         ]
                     }
                 ]);

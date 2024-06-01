@@ -68,9 +68,22 @@ class Superqequel {
                     type: 'string',
                     default: ''
                 },
-                alias: {
-                    type: 'object',
-                    default: {}
+                identifiers: {
+                    items: {
+                        type: 'object',
+                        properties: {
+                            name: {
+                                type: 'string',
+                                default: ''
+                            },
+                            alias: {
+                                type: 'string',
+                                default: ''
+                            }
+                        },
+                    },
+                    type: 'array',
+                    default: []
                 },
                 properties: {
                     type: 'object',

@@ -18,6 +18,9 @@ class Hql {
     getParams() {
         return this.params;
     }
+    escapeIdentifier(str) {
+        return '"' + str.replace(/"/g, '""') + '"';
+    }
     /**
      * Compile
      * Allows us to override the escape expression just for this compile call.
@@ -45,8 +48,8 @@ class Hql {
             if (Array.isArray(value)) {
                 return this.arrayToList(value);
             }
-            else if (value.__alias__) {
-                return this.objectToAlias(value);
+            else if (value.__identifier__) {
+                return this.objectToIdentifier(value.__identifier__);
             }
             else {
                 return this.objectToValues(value);
@@ -82,12 +85,12 @@ class Hql {
         return sql;
     }
     /**
-     * Object to Alias
+     * Object to Identifier
      */
-    objectToAlias(object) {
-        return (this.parameterize(object.__alias__.column) +
-            ' as ' +
-            this.parameterize(object.__alias__.alias));
+    objectToIdentifier({ name, alias }) {
+        return (alias)
+            ? `${this.escapeIdentifier(name)} as ${this.escapeIdentifier(alias)}`
+            : `${this.escapeIdentifier(name)}`;
     }
     /**
      * Object to Values
@@ -104,21 +107,20 @@ class Hql {
         return sql;
     }
     /**
-     * Alias
+     * Identifiers
      */
-    alias(definitionAlias, value) {
-        if (!definitionAlias)
+    identifiers(definitionIdentifiers, value) {
+        if (!definitionIdentifiers)
             return value;
-        let aliasValue = [];
+        let identifiers = [];
         value = Array.isArray(value) ? value : [value];
-        for (const alias in definitionAlias) {
-            const column = definitionAlias[alias];
+        definitionIdentifiers.forEach(({ name, alias }) => {
             value.forEach((val) => {
-                if (val === alias)
-                    aliasValue.push({ __alias__: { alias, column } });
+                if (val === name || val === alias)
+                    identifiers.push({ __identifier__: { name, alias } });
             });
-        }
-        return aliasValue.length === 1 ? aliasValue[0] : aliasValue;
+        });
+        return identifiers.length === 1 ? identifiers[0] : identifiers;
     }
     /**
      * Register Helpers
@@ -130,9 +132,9 @@ class Hql {
         helpers.push({
             prefix: ':',
             functions: {
-                // Alias Select statements
-                as: function (value, context) {
-                    return $this.alias(context.data.root.$definition.alias, value);
+                // Identifiers Select statements
+                id: function (value, context) {
+                    return $this.identifiers(context.data.root.$definition.identifiers, value);
                 },
                 ht: function (value) {
                     return $this.HTMLEscapeExpression(value);
