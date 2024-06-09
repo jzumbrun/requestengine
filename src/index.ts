@@ -3,7 +3,9 @@ import Hql from './hql'
 import type { IConfig, IDefinition, IError, 
   IHistory, IRequest, IResponse, IQueryName } from '../types'
 
-class Superqequel {
+export * from '../types'
+
+export default class Supersequel {
   config: IConfig
 
   constructor (config: IConfig) {
@@ -301,7 +303,6 @@ class Superqequel {
 /**
  * Init
  */
-export default (config: IConfig) => {
-  return new Superqequel(config)
+export function initSupersequel (config: IConfig) {
+  return new Supersequel(config)
 }
-

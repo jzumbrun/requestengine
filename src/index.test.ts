@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals'
-import initSupersequel from '.'
+import { initSupersequel } from '.'
 
 const queryStatement = (statement: string, data: unknown) => {
   return new Promise((resolve) => {

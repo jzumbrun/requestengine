@@ -1,10 +1,7 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const globals_1 = require("@jest/globals");
-const _1 = __importDefault(require("."));
+const _1 = require(".");
 const queryStatement = (statement, data) => {
     return new Promise((resolve) => {
         const number = parseInt(statement);
@@ -17,7 +14,7 @@ const queryStatement = (statement, data) => {
             resolve([statement, data]);
     });
 };
-const supersequel = (0, _1.default)({
+const supersequel = (0, _1.initSupersequel)({
     helpers: [{ functions: {
                 trim: (str) => str.trim(),
                 eq: (a, b) => a === b,

@@ -12,9 +12,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.initSupersequel = void 0;
 const ajv_1 = __importDefault(require("ajv"));
 const hql_1 = __importDefault(require("./hql"));
-class Superqequel {
+class Supersequel {
     constructor(config) {
         config.definitions = config.definitions || [];
         config.env = process.env.NODE_ENV || 'production';
@@ -261,9 +262,11 @@ class Superqequel {
         });
     }
 }
+exports.default = Supersequel;
 /**
  * Init
  */
-exports.default = (config) => {
-    return new Superqequel(config);
-};
+function initSupersequel(config) {
+    return new Supersequel(config);
+}
+exports.initSupersequel = initSupersequel;

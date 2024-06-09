@@ -1,6 +1,6 @@
 import Ajv from 'ajv';
 import type { IConfig, IDefinition, IHistory, IRequest, IResponse, IQueryName } from '../types';
-declare class Superqequel {
+export default class Supersequel {
     config: IConfig;
     constructor(config: IConfig);
     intersects(a: any[], b: any[]): boolean;
@@ -42,6 +42,5 @@ declare class Superqequel {
 /**
  * Init
  */
-declare const _default: (config: IConfig) => Superqequel;
-export default _default;
+export declare function initSupersequel(config: IConfig): Supersequel;
 //# sourceMappingURL=index.d.ts.map

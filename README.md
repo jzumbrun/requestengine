@@ -46,7 +46,7 @@ supersequel.execute({ definitions, user, queries })
 A middleware for express is also provided with a query callback to a live database connection:
 
 ```
-supersequel({
+const supersequel = initSupersequel({
     definitions,
     query: q => mysql.exec(q)
 })
