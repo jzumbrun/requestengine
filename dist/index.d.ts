@@ -1,8 +1,9 @@
 import Ajv from 'ajv';
 import type { IConfig, IDefinition, IHistory, IRequest, IResponse, IQueryName } from '../types';
+export * from '../types';
 export default class Supersequel {
     config: IConfig;
-    constructor(config: IConfig);
+    constructor(config?: IConfig);
     intersects(a: any[], b: any[]): boolean;
     /**
      * Validate Request
@@ -33,11 +34,11 @@ export default class Supersequel {
      * Query middleware
      * @param {object} config
      */
-    middleware(config: IConfig): (req: IRequest, res: IResponse) => Promise<void>;
+    middleware(config?: IConfig): (req: IRequest, res: IResponse) => Promise<void>;
     /**
      * Execute queries
      */
-    execute(config: IConfig): Promise<IResponse>;
+    execute(config?: IConfig): Promise<IResponse>;
 }
 /**
  * Init

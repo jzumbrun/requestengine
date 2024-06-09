@@ -8,7 +8,7 @@ export * from '../types'
 export default class Supersequel {
   config: IConfig
 
-  constructor (config: IConfig) {
+  constructor (config: IConfig = {}) {
     config.definitions = config.definitions || []
     config.env = process.env.NODE_ENV || 'production'
     config.query = config.query || undefined
@@ -178,7 +178,7 @@ export default class Supersequel {
    * Query middleware
    * @param {object} config
    */
-  middleware (config: IConfig) {
+  middleware (config: IConfig = {}) {
     return async (req: IRequest, res: IResponse) => {
       const response = await this.execute({
         queries: req.body?.queries || [],
@@ -192,7 +192,7 @@ export default class Supersequel {
   /**
    * Execute queries
    */
-  async execute (config: IConfig): Promise<IResponse> {
+  async execute (config: IConfig = {}): Promise<IResponse> {
     const response: IResponse = { queries: [], send: () => {} }
     const inboundAjv = new Ajv({ useDefaults: true })
     const async: Promise<void>[] = []
