@@ -1,6 +1,6 @@
 import Ajv from 'ajv';
-import type { IConfig, IDefinition, IHistory, IRequest, IResponse, IQueryName } from '../types';
-export * from '../types';
+import type { IConfig, IDefinition, IHistory, IRequest, IResponse, IQueryName, IQuery } from '../types.d.ts';
+export type * from '../types.d.ts';
 export default class Supersequel {
     config: IConfig;
     constructor(config?: IConfig);
@@ -16,7 +16,7 @@ export default class Supersequel {
     /**
      * Outbound
      */
-    outbound(response: IResponse, request: IRequest, rows: unknown, definition: IDefinition, history: IHistory): void;
+    outbound(response: IResponse, query: IQuery, definition: IDefinition, history: IHistory, data: unknown): void;
     /**
      * Query
      */
@@ -38,7 +38,7 @@ export default class Supersequel {
     /**
      * Execute queries
      */
-    execute(config?: IConfig): Promise<IResponse>;
+    execute(config: IConfig): Promise<IResponse>;
 }
 /**
  * Init

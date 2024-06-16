@@ -1,18 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -22,14 +8,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initSupersequel = void 0;
 const ajv_1 = __importDefault(require("ajv"));
+const ajv_keywords_1 = __importDefault(require("ajv-keywords"));
 const hql_1 = __importDefault(require("./hql"));
-__exportStar(require("../types"), exports);
 class Supersequel {
     constructor(config = {}) {
         config.definitions = config.definitions || [];
@@ -61,7 +54,7 @@ class Supersequel {
                     type: 'object',
                     default: {}
                 },
-                sync: {
+                async: {
                     type: 'boolean',
                     default: false
                 }
@@ -84,6 +77,10 @@ class Supersequel {
                     type: 'string',
                     default: ''
                 },
+                handler: {
+                    typeof: 'function',
+                    // Do not set default function
+                },
                 identifiers: {
                     items: {
                         type: 'object',
@@ -100,10 +97,6 @@ class Supersequel {
                     },
                     type: 'array',
                     default: []
-                },
-                properties: {
-                    type: 'object',
-                    default: {}
                 },
                 inboundSchema: {
                     type: 'object',
@@ -124,27 +117,29 @@ class Supersequel {
     /**
      * Outbound
      */
-    outbound(response, request, rows, definition, history) {
+    outbound(response, query, definition, history, data) {
         const outboundAjv = new ajv_1.default({ useDefaults: true, removeAdditional: 'all' });
         // Do we have proper outbound query schema
-        if (!outboundAjv.validate(definition.outboundSchema, rows)) {
-            response.queries.push(Object.assign(Object.assign({}, this.getQueryName(request)), { error: {
+        if (definition.outboundSchema && !outboundAjv.validate(definition.outboundSchema, data)) {
+            response.queries.push(Object.assign(Object.assign({}, this.getQueryName(query)), { error: {
                     errno: 1005,
                     code: 'ERROR_QUERY_OUTBOUND_VALIDATION',
                     details: outboundAjv.errors
                 } }));
         }
         else {
-            if (request.id)
-                history[request.id] = rows;
+            if (query.id)
+                history[query.id] = data;
             // Add succesfull query responses by id
-            response.queries.push(Object.assign(Object.assign({}, this.getQueryName(request)), { results: rows }));
+            response.queries.push(Object.assign(Object.assign({}, this.getQueryName(query)), { results: data }));
         }
     }
     /**
      * Query
      */
     query(request, definition, config, history = {}) {
+        if (!definition.statement)
+            throw new Error('Query definition requires a statement.');
         const hql = new hql_1.default();
         const data = Object.assign(Object.assign({}, (request.properties || {})), { $user: config.user, $history: history, $definition: definition });
         hql.registerHelpers(config.helpers);
@@ -189,11 +184,13 @@ class Supersequel {
     /**
      * Execute queries
      */
-    execute(config = {}) {
-        var _a, _b;
+    execute(config) {
+        var _a, e_1, _b, _c;
+        var _d, _e;
         return __awaiter(this, void 0, void 0, function* () {
             const response = { queries: [], send: () => { } };
             const inboundAjv = new ajv_1.default({ useDefaults: true });
+            (0, ajv_keywords_1.default)(inboundAjv);
             const async = [];
             const history = {};
             // Set config defaults
@@ -204,63 +201,100 @@ class Supersequel {
             config.release = config.release || this.config.release;
             config.queries = config.queries || [];
             try {
-                for (const query of config.queries) {
-                    // Do we have proper query schema?
-                    if (!this.validateRequest(query, inboundAjv)) {
-                        response.queries.push(Object.assign(Object.assign({}, this.getQueryName(query)), { error: {
-                                errno: 1000,
-                                code: 'ERROR_REQUEST_VALIDATION',
-                                details: inboundAjv.errors
-                            } }));
-                        continue;
+                try {
+                    for (var _f = true, _g = __asyncValues(config.queries), _h; _h = yield _g.next(), _a = _h.done, !_a;) {
+                        _c = _h.value;
+                        _f = false;
+                        try {
+                            const query = _c;
+                            // Do we have proper query schema?
+                            if (!this.validateRequest(query, inboundAjv)) {
+                                response.queries.push(Object.assign(Object.assign({}, this.getQueryName(query)), { error: {
+                                        errno: 1000,
+                                        code: 'ERROR_REQUEST_VALIDATION',
+                                        details: inboundAjv.errors
+                                    } }));
+                                continue;
+                            }
+                            // Do we have proper definition query schema?
+                            const definition = (_d = config.definitions) === null || _d === void 0 ? void 0 : _d.find(q => q.name === query.name);
+                            // Do we have sql?
+                            if (!definition) {
+                                response.queries.push(Object.assign(Object.assign({}, this.getQueryName(query)), { error: { errno: 1002, code: 'ERROR_QUERY_NOT_FOUND' } }));
+                                continue;
+                            }
+                            if (!this.validateQueryDefinition(definition, inboundAjv)) {
+                                response.queries.push(Object.assign(Object.assign({}, this.getQueryName(query)), { error: {
+                                        errno: 1001,
+                                        code: 'ERROR_QUERY_DEFINITION_VALIDATION',
+                                        details: inboundAjv.errors
+                                    } }));
+                                continue;
+                            }
+                            // Do we have access rights?
+                            if (!this.intersects(definition.access, ((_e = config.user) === null || _e === void 0 ? void 0 : _e.access) || [])) {
+                                response.queries.push(Object.assign(Object.assign({}, this.getQueryName(query)), { error: { errno: 1003, code: 'ERROR_QUERY_NO_ACCESS' } }));
+                                continue;
+                            }
+                            // Is the handler a function?
+                            if (definition.handler && typeof definition.handler !== 'function') {
+                                response.queries.push(Object.assign(Object.assign({}, this.getQueryName(query)), { error: { errno: 1008, code: 'ERROR_QUERY_HANDLER_NOT_FUNCTION' } }));
+                                continue;
+                            }
+                            const queryPromise = new Promise((resolve) => __awaiter(this, void 0, void 0, function* () {
+                                try {
+                                    // Do we have proper inbound query schema?
+                                    let data;
+                                    if (definition.inboundSchema && !inboundAjv.validate(definition.inboundSchema, query.properties)) {
+                                        response.queries.push(Object.assign(Object.assign({}, this.getQueryName(query)), { error: {
+                                                errno: 1004,
+                                                code: 'ERROR_QUERY_INBOUND_VALIDATION',
+                                                details: inboundAjv.errors
+                                            } }));
+                                    }
+                                    else if (definition.statement === '') {
+                                        if (definition.handler)
+                                            data = yield definition.handler({ response, query, definition, history, config, data });
+                                        this.outbound(response, query, definition, history, data);
+                                    }
+                                    else {
+                                        data = yield this.query(query, definition, config, history);
+                                        if (definition.handler)
+                                            data = yield definition.handler({ response, query, definition, history, config, data });
+                                        this.outbound(response, query, definition, history, data);
+                                    }
+                                }
+                                catch (error) {
+                                    this.queryError(error, query, response, config);
+                                }
+                                finally {
+                                    resolve();
+                                }
+                            }));
+                            if (!query.async)
+                                yield queryPromise;
+                            else
+                                async.push(queryPromise);
+                        }
+                        finally {
+                            _f = true;
+                        }
                     }
-                    // Do we have proper definition query schema?
-                    const definition = (_a = config.definitions) === null || _a === void 0 ? void 0 : _a.find(q => q.name === query.name);
-                    // Do we have sql?
-                    if (!definition) {
-                        response.queries.push(Object.assign(Object.assign({}, this.getQueryName(query)), { error: { errno: 1002, code: 'ERROR_QUERY_NOT_FOUND' } }));
-                        continue;
+                }
+                catch (e_1_1) { e_1 = { error: e_1_1 }; }
+                finally {
+                    try {
+                        if (!_f && !_a && (_b = _g.return)) yield _b.call(_g);
                     }
-                    if (!this.validateQueryDefinition(definition, inboundAjv)) {
-                        response.queries.push(Object.assign(Object.assign({}, this.getQueryName(query)), { error: {
-                                errno: 1001,
-                                code: 'ERROR_QUERY_DEFINITION_VALIDATION',
-                                details: inboundAjv.errors
-                            } }));
-                        continue;
-                    }
-                    // Do we have access rights?
-                    if (!this.intersects(definition.access, ((_b = config.user) === null || _b === void 0 ? void 0 : _b.access) || [])) {
-                        response.queries.push(Object.assign(Object.assign({}, this.getQueryName(query)), { error: { errno: 1003, code: 'ERROR_QUERY_NO_ACCESS' } }));
-                        continue;
-                    }
-                    // Do we have proper inbound query schema?
-                    if (!inboundAjv.validate(definition.inboundSchema, query.properties)) {
-                        response.queries.push(Object.assign(Object.assign({}, this.getQueryName(query)), { error: {
-                                errno: 1004,
-                                code: 'ERROR_QUERY_INBOUND_VALIDATION',
-                                details: inboundAjv.errors
-                            } }));
-                    }
-                    else {
-                        const queryPromise = this.query(query, definition, config, history)
-                            .then((rows) => {
-                            this.outbound(response, query, rows, definition, history);
-                        })
-                            .catch(error => this.queryError(error, query, response, config));
-                        if (query.sync)
-                            yield queryPromise;
-                        else
-                            async.push(queryPromise);
-                    }
+                    finally { if (e_1) throw e_1.error; }
                 }
                 // Process all of the async queries here
                 // The catch was defined above in the creation of the promise
                 if (async.length)
-                    yield Promise.all(async).catch(e => { });
+                    yield Promise.all(async);
             }
             catch (error) {
-                // Do we have any uknown issues?
+                // Do we have any unknown issues?
                 const err = { error: { errno: 1007, code: 'ERROR_UNKNOWN' } };
                 if (config.env === 'production')
                     response.queries.push(err);
