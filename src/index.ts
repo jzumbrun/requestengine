@@ -1,9 +1,11 @@
-import Ajv from 'ajv'
+import Ajv, { ValidateFunction } from 'ajv'
+import ajvKeywords from 'ajv-keywords'
 import Hql from './hql'
 import type { IConfig, IDefinition, IError, 
-  IHistory, IRequest, IResponse, IQueryName } from '../types'
+  IHistory, IRequest, IResponse, IQueryName, IQuery, 
+  IHandler} from '../types.d.ts'
 
-export * from '../types'
+export type * from '../types.d.ts'
 
 export default class Supersequel {
   config: IConfig
@@ -41,7 +43,7 @@ export default class Supersequel {
             type: 'object',
             default: {}
           },
-          sync: {
+          async: {
             type: 'boolean',
             default: false
           }
@@ -68,6 +70,10 @@ export default class Supersequel {
             type: 'string',
             default: ''
           },
+          handler: {
+            typeof: 'function',
+            // Do not set default function
+          },
           identifiers: {
             items: {
               type: 'object',
@@ -84,10 +90,6 @@ export default class Supersequel {
             },
             type: 'array',
             default: []
-          },
-          properties: {
-            type: 'object',
-            default: {}
           },
           inboundSchema: {
             type: 'object',
@@ -111,13 +113,13 @@ export default class Supersequel {
   /**
    * Outbound
    */
-  outbound (response: IResponse, request: IRequest, rows: unknown, definition: IDefinition, history: IHistory): void {
+  outbound (response: IResponse, query: IQuery, definition: IDefinition, history: IHistory, data: unknown ): void {
     const outboundAjv = new Ajv({ useDefaults: true, removeAdditional: 'all' })
 
     // Do we have proper outbound query schema
-    if (!outboundAjv.validate(definition.outboundSchema, rows)) {
+    if (definition.outboundSchema && !outboundAjv.validate(definition.outboundSchema, data)) {
       response.queries.push({
-        ...this.getQueryName(request),
+        ...this.getQueryName(query),
         error: {
           errno: 1005,
           code: 'ERROR_QUERY_OUTBOUND_VALIDATION',
@@ -125,9 +127,9 @@ export default class Supersequel {
         }
       })
     } else {
-      if (request.id) history[request.id] = rows
+      if (query.id) history[query.id] = data
       // Add succesfull query responses by id
-      response.queries.push({ ...this.getQueryName(request), results: rows })
+      response.queries.push({ ...this.getQueryName(query), results: data })
     }
   }
 
@@ -135,7 +137,7 @@ export default class Supersequel {
    * Query
    */
   query (request: IRequest, definition: IDefinition, config: IConfig, history: IHistory = {}): Promise<unknown> {
-
+    if (!definition.statement) throw new Error('Query definition requires a statement.')
     const hql = new Hql()
     const data = {
       ...(request.properties || {}),
@@ -192,9 +194,11 @@ export default class Supersequel {
   /**
    * Execute queries
    */
-  async execute (config: IConfig = {}): Promise<IResponse> {
+  async execute (config: IConfig): Promise<IResponse> {
     const response: IResponse = { queries: [], send: () => {} }
     const inboundAjv = new Ajv({ useDefaults: true })
+    ajvKeywords(inboundAjv)
+
     const async: Promise<void>[] = []
     const history: IHistory = {}
 
@@ -207,7 +211,7 @@ export default class Supersequel {
     config.queries = config.queries || []
 
     try {
-      for (const query of config.queries) {
+      for await (const query of config.queries) {
         // Do we have proper query schema?
         if (!this.validateRequest(query, inboundAjv)) {
           response.queries.push({
@@ -254,38 +258,51 @@ export default class Supersequel {
           continue
         }
 
-        // Do we have proper inbound query schema?
-        if (!inboundAjv.validate(definition.inboundSchema, query.properties)) {
+        // Is the handler a function?
+        if (definition.handler && typeof definition.handler !== 'function') {
           response.queries.push({
             ...this.getQueryName(query),
-            error: {
-              errno: 1004,
-              code: 'ERROR_QUERY_INBOUND_VALIDATION',
-              details: inboundAjv.errors
-            }
+            error: { errno: 1008, code: 'ERROR_QUERY_HANDLER_NOT_FUNCTION' }
           })
-        } else {
-          const queryPromise = this.query(
-            query,
-            definition,
-            config,
-            history
-          )
-          .then((rows: unknown) => {
-            this.outbound(response, query, rows, definition, history)
-          })
-          .catch(error => this.queryError(error, query, response, config))
-
-          if (query.sync) await queryPromise
-          else async.push(queryPromise)
+          continue
         }
+
+        const queryPromise = new Promise<void>(async (resolve) => {
+          try {
+            // Do we have proper inbound query schema?
+            let data: unknown
+            if (definition.inboundSchema && !inboundAjv.validate(definition.inboundSchema, query.properties)) {
+              response.queries.push({
+                ...this.getQueryName(query),
+                error: {
+                  errno: 1004,
+                  code: 'ERROR_QUERY_INBOUND_VALIDATION',
+                  details: inboundAjv.errors
+                }
+              })
+            } else if (definition.statement === '') {
+                if (definition.handler) data = await definition.handler({ response, query, definition, history, config, data })
+                this.outbound(response, query, definition, history, data)
+            } else {
+              data = await this.query(query, definition, config, history)
+              if (definition.handler) data = await definition.handler({ response, query, definition, history, config, data })
+              this.outbound(response, query, definition, history, data )
+            }
+          } catch (error: any) {
+            this.queryError(error, query, response, config)
+          } finally {
+            resolve()
+          }
+        })
+        if (!query.async) await queryPromise
+        else async.push(queryPromise)
       }
 
       // Process all of the async queries here
       // The catch was defined above in the creation of the promise
-      if (async.length) await Promise.all(async).catch(e => {})
+      if (async.length) await Promise.all(async)
     } catch (error: any) {
-      // Do we have any uknown issues?
+      // Do we have any unknown issues?
       const err: IError = { error: { errno: 1007, code: 'ERROR_UNKNOWN' } }
       if (config.env === 'production') response.queries.push(err)
       else {

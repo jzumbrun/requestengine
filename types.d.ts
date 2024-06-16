@@ -1,3 +1,5 @@
+import type { AnySchema } from 'ajv'
+
 export interface IConfig {
   definitions?: IDefinition[]
   env?: string
@@ -23,13 +25,22 @@ export interface IIdentifier {
   alias?: string 
 }
 
+export interface IHandler {
+  response: IResponse
+  query: IQuery
+  definition: IDefinition
+  history: IHistory
+  config: IConfig
+  data?: any
+}
+
 export interface IDefinition {
   name: string
-  statement: string
+  statement?: string
+  handler?: (context: IHandler) => any
   identifiers?: IIdentifier[]
-  properties?: any
-  inboundSchema?: any
-  outboundSchema?: any
+  inboundSchema?: AnySchema
+  outboundSchema?: AnySchema
   access: string[]
 }
 
@@ -43,7 +54,7 @@ export interface IHistory {
 }
 
 export interface IUser {
-  id: number
+  id: number | string
   access: string[]
 }
 
@@ -51,7 +62,7 @@ export interface IQuery {
   id?: string
   name: string
   properties?: any
-  sync?: boolean
+  async?: boolean
 }
 
 export interface IError {

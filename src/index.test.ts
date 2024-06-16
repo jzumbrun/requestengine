@@ -29,13 +29,13 @@ describe('Supersequel', () => {
       }
     }
 
-    it('users.update', done => {
+    it('$users.update', done => {
       supersequel
         .middleware(
           {
             definitions: [
               {
-                name: 'users.update',
+                name: '$users.update',
                 statement: 'UPDATE users SET {{user}}',
                 access: ['user']
               }
@@ -49,7 +49,7 @@ describe('Supersequel', () => {
             body: {
               queries: [
                 {
-                  name: 'users.update',
+                  name: '$users.update',
                   properties: {
                     user: { name: 'Jon', age: 33 }
                   }
@@ -102,20 +102,20 @@ describe('Supersequel', () => {
                 {
                   id: '1',
                   name: 'long',
-                  sync: true
                 },
                 {
                   id: '2',
-                  name: 'long'
+                  name: 'long',
+                  async: true
                 },
                 {
                   id: '3',
-                  name: 'short'
+                  name: 'short',
+                  async: true
                 },
                 {
                   id: '4',
                   name: 'immediate',
-                  sync: true
                 }
               ]
             }
@@ -162,13 +162,11 @@ describe('Supersequel', () => {
               queries: [
                 {
                   id: 'one',
-                  name: 'thing.one',
-                  sync: true
+                  name: 'thing.one'
                 },
                 {
                   id: 'two',
-                  name: 'thing.two',
-                  sync: true
+                  name: 'thing.two'
                 }
               ]
             }
@@ -385,6 +383,39 @@ describe('Supersequel', () => {
               ]
             }
           ])
+          done()
+        })
+        .catch(error => {
+          done(error)
+        })
+    })
+
+    it('async handler', done => {
+      supersequel
+        .execute({
+          user: {
+            id: 123,
+            access: ['user']
+          },
+          queries: [
+            {
+              name: 'handler'
+            }
+          ],
+          definitions: [
+            {
+              name: 'handler',
+              handler: (data: any) => {
+                return new Promise((resolve) => {
+                  setTimeout(() => { resolve(1) }, 0)
+                })
+              },
+              access: ['user']
+            }
+          ]
+        })
+        .then(({ queries }) => {
+          expect(queries).toEqual([{ name: 'handler', results: 1 } ])
           done()
         })
         .catch(error => {
