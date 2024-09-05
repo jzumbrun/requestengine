@@ -1,27 +1,25 @@
-# supersequel
+# RequestEngine
+
+RequestEngine is a logic-less PostgreSQL parameterized paralell request api, using plain SQL statements built by handlebar templates, validated by json schema.
+
+RequestEngine, inspired by GraphQL, can wrap up multiple resource requests and mutations into one api call, thus reducing
+the chattiness of SPAs. Similar to GraphQL, all requests are POSTS regardless of the query actions.
 
 
-supersequel is a logic-less PostgreSQL parameterized paralell request api, using plain SQL statements built by handlebar templates, validated by json schema.
+## Client Requests
+Each request requires a name, an optional id, async and properties object (as defined by the request definition).
 
-supersequel, inspired by GraphQL, can wrap up multiple resource requests and mutations into one api call. Thus reducing
-the chattiness of SPAs. Similart to GraphQL, all requests are POSTS regardless of the query actions.
-
-#### Examples
-
-## Client request
-Each query request requires a name, an optional id, sync and properties object (as defined by the query definition).
-
-id: Required if querying for same query name multiple times, or if accessing previous query response history.
-name: The name is used to find the defined query name.
-properties: Data values supplied to the statement query string.
-sync: Sync will force an async/await on the query. All synced queries will load first no matter the request order.
+- id: Required if using the same request name multiple times, or if accessing previous request's response history.
+- name: The name is used to find the defined request name.
+- properties: Data values supplied to the statement query string.
+- async: async will allow requests to be called asynchronously.
 
 
 ```
 // Definitions are supplied by the server
 const definitions = [{
     name: 'greetings',
-    statement:
+    hql:
         'SELECT * FROM greetings WHERE `accent`={{accent}}',
     access: ['user']
 }];
@@ -32,50 +30,51 @@ const user = {
     access: ['user']
 }
 
-// Queries are supplied by a request.
-const queries = [{
+// Requests are supplied by a client request.
+const Requests = [{
     name: 'greetings',
     properties: {
         "accent": "british",
     }
 }]
 
-supersequel.execute({ definitions, user, queries })
+const requestengine = initRequestEngine({
+    definitions,
+    query: q => pg.query(q)
+})
+requestengine.execute({ user, requests })
 ```
 
 A middleware for express is also provided with a query callback to a live database connection:
 
 ```
-const supersequel = initSupersequel({
+const requestengine = initRequestEngine({
     definitions,
-    query: q => mysql.exec(q)
+    query: q => pg.query(q)
 })
 
-app.post('/query', supersequel.middleware())
+app.post('/requests', requestengine.middleware())
 ```
 
-## Defined queries
+## Request Definitions
 
-Each query is given a name, an SQL statement, an access list, and an inbound schema.
+Each definitions is given a name, an hql statement, an access list, and an inbound schema.
 
-Name: Name should reflect the resource and action. This is only a convention. But it must be unique.
-statement: The statement is a simple SQL statement managed by handlebars. Handlebars will take care of sql injections.
-    We have take the liberty to add all lodash functions to handlebars for convenience. That are defined as `_trim`, etc.
-    Each property from the client request will be available to use in the query statement as well as a user object
-    that is provided by boxless via a signin gateway and JWT tokens.
-    All successfull query responses within a client request will be available to subseqent queries in the $history object.
-    An id is required on the query request inorder to access it in the $history object. Also the sync must be set to true, in
-    order to ensure the previous query is run in proper order.
-access: The access array is a whitelist for authorized access to each query.
-inboundSchema: Inbound schema utilizes json schema and validates inbound data.
-outboundSchema: Outbound schema utilizes json schema and validates data coming from the database response.
+- name: Name should reflect the resource and action. This is only a convention. But it must be unique.   
+- hql: The hql statement is a simple SQL statement managed by handlebars. Handlebars will take care of sql injections using postgres parameterization.   
+We have taken the liberty to add all lodash functions to handlebars for convenience. Thay are defined as `_trim`, etc.
+All successfull requests responses within a client request will be available to subseqent requests in the $history object.
+An id is required on the request in order to access it in the $history object. All requests are run synchronous by default in the order provided. Setting async to true, will allow for asynchronous calls, but the $history timeline cannot be guaranteed.
+- handler: The handler is optional and cannot be combined with the hql property. It is a handling function that allows for more flexible control over the request if more complex logic is need that the hql statement alone, cannot provide. The handler has access to a hql function to make query calls along with all other data in the request pipeline.
+- access: The access array is a list for authorized access to each query.   
+- inboundSchema: Inbound schema utilizes json schema and validates inbound data.   
+- outboundSchema: Outbound schema utilizes json schema and validates data coming from the database response.   
     If properties are not defined, they will be removed form the outbound response.
 ```
 {
     "id": "greetings.insert",
     "name": "greetings.insert",
-    sync: true,
-    "statement": "INSERT INTO greetings (description, words, user_id) VALUES ('{{description}}', '{{words}}', {{$user.id}})",
+    "hql": "INSERT INTO greetings (description, words, user_id) VALUES ('{{description}}', '{{words}}', {{$user.id}})",
     "access": ["user"],
     "inboundSchema": {
         "type": "object",
@@ -94,8 +93,7 @@ outboundSchema: Outbound schema utilizes json schema and validates data coming f
 },
 {
     "name": "greetings.select.byId",
-    sync: true,
-    "statement": "SELECT {{select}} FROM greetings WHERE user_id={{$user.id}} AND id={{$history.[greetings.insert].id}} LIMIT {{limit}}",
+    "hql": "SELECT {{select}} FROM greetings WHERE user_id={{$user.id}} AND id={{$history.[greetings.insert].id}} LIMIT {{limit}}",
     "access": ["user"],
     "inboundSchema": {
         "type": "object",

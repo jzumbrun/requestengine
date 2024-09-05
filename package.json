@@ -1,16 +1,16 @@
 {
-  "name": "@elseblock/supersequel",
+  "name": "@elseblock/requestengine",
   "version": "2.0.0",
   "description": "PostgreSQL paralell request api, using plain SQL parameterized statements built by handlebar templates, validated by json schema.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jzumbrun/supersequel.git"
+    "url": "https://github.com/jzumbrun/requestengine.git"
   },
   "scripts": {
     "prepublish": "tsc && npm version patch && git tag && git push && git push --tags",
-    "test": "standard --fix && NODE_ENV=testing mocha ./index.test.js"
+    "test": "standard --fix && NODE_ENV=testing jest ./index.test.js"
   },
   "keywords": [
     "sql",

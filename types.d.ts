@@ -3,21 +3,12 @@ import type { AnySchema } from 'ajv'
 export interface IConfig {
   definitions?: IDefinition[]
   env?: string
-  query?: (statement: string, data: any) => Promise<any>
-  release?: (...args: any[]) => any
   helpers?: IHelper[]
   user?: IUser
-  queries?: IQuery[]
+  requests?: IQuery[]
   body?: IQuery[]
-}
-  
-export interface IRequest {
-  id?: string
-  name?: string
-  properties?: any
-  sync?: boolean
-  user?: IUser
-  body?: { queries: IQuery[] }
+  release?: (...args: any[]) => any
+  query?: (statement: string, data: any) => Promise<any>
 }
 
 export interface IIdentifier {
@@ -27,7 +18,7 @@ export interface IIdentifier {
 
 export interface IHandler {
   response: IResponse
-  query: IQuery
+  request: IRequest
   definition: IDefinition
   history: IHistory
   config: IConfig
@@ -36,17 +27,12 @@ export interface IHandler {
 
 export interface IDefinition {
   name: string
-  statement?: string
+  hql?: string
   handler?: (context: IHandler) => any
   identifiers?: IIdentifier[]
   inboundSchema?: AnySchema
   outboundSchema?: AnySchema
   access: string[]
-}
-
-export interface IResponse {
-  queries: any[]
-  send: (response: any) => void
 }
 
 export interface IHistory {
@@ -58,11 +44,25 @@ export interface IUser {
   access: string[]
 }
 
-export interface IQuery {
+export interface IHTTPRequest {
+  user?: IUser
+  body?: { requests: IRequest[] }
+}
+
+export interface IHTTPResponse {
+  send: (response: IResponse) => void
+}
+
+export interface IRequest {
   id?: string
   name: string
   properties?: any
   async?: boolean
+}
+
+
+export interface IResponse {
+  requests: any[]
 }
 
 export interface IError {
@@ -70,7 +70,7 @@ export interface IError {
   error: { errno: number, code: string }
 }
 
-export interface IQueryName {
+export interface IRequestName {
   id?: string
   name?: string
 }

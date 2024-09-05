@@ -7,10 +7,10 @@ interface IIdentifierParameter {
 }
 
 /**
- * Hql
+ * HqlEngine
  * (H)andebars s(ql)
  */
-export default class Hql {
+export default class HqlEngine {
   private instance: typeof Handlebars 
 
   private HTMLEscapeExpression: typeof Utils.escapeExpression

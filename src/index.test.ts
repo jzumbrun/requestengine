@@ -1,17 +1,17 @@
 import { describe, it, expect } from '@jest/globals'
-import { initSupersequel } from '.'
+import { initRequestEngine } from '.'
 
-const queryStatement = (statement: string, data: unknown) => {
+const queryStatement = (hql: string, data: unknown) => {
   return new Promise((resolve) => {
-    const number = parseInt(statement)
-    if (parseInt(statement) > -1) {
+    const number = parseInt(hql)
+    if (parseInt(hql) > -1) {
       setTimeout(() => {
-        resolve(statement)
+        resolve(hql)
       }, number)
-    } else resolve([statement, data])
+    } else resolve([hql, data])
   })
 }
-const supersequel = initSupersequel({
+const requestengine = initRequestEngine({
   helpers: [{ functions: {
     trim: (str: string) => str.trim(),
     eq: (a, b) => a === b,
@@ -21,7 +21,7 @@ const supersequel = initSupersequel({
   query: queryStatement
 })
 
-describe('Supersequel', () => {
+describe('RequestEngine', () => {
   describe('middleware', () => {
     const res: any = {
       send: (response: unknown) => {
@@ -30,13 +30,13 @@ describe('Supersequel', () => {
     }
 
     it('$users.update', done => {
-      supersequel
+      requestengine
         .middleware(
           {
             definitions: [
               {
                 name: '$users.update',
-                statement: 'UPDATE users SET {{user}}',
+                hql: 'UPDATE users SET {{user}}',
                 access: ['user']
               }
             ]
@@ -47,7 +47,7 @@ describe('Supersequel', () => {
               access: ['user']
             },
             body: {
-              queries: [
+              requests: [
                 {
                   name: '$users.update',
                   properties: {
@@ -60,7 +60,7 @@ describe('Supersequel', () => {
           res
         )
         .then(() => {
-          expect(res.data.queries[0].results).toEqual(
+          expect(res.data.requests[0].results).toEqual(
             ['UPDATE users SET $1 = $2, $3 = $4', ['name', 'Jon', 'age', 33]]
           )
           done()
@@ -71,23 +71,23 @@ describe('Supersequel', () => {
     })
 
     it('sync', done => {
-      supersequel
+      requestengine
         .middleware(
           {
             definitions: [
               {
                 name: 'immediate',
-                statement: '0',
+                hql: '0',
                 access: ['user']
               },
               {
                 name: 'short',
-                statement: '100',
+                hql: '100',
                 access: ['user']
               },
               {
                 name: 'long',
-                statement: '200',
+                hql: '200',
                 access: ['user']
               }
             ]
@@ -98,7 +98,7 @@ describe('Supersequel', () => {
               access: ['user']
             },
             body: {
-              queries: [
+              requests: [
                 {
                   id: '1',
                   name: 'long',
@@ -123,7 +123,7 @@ describe('Supersequel', () => {
           res
         )
         .then(() => {
-          expect(res.data.queries).toEqual([
+          expect(res.data.requests).toEqual([
             { id: '1', name: 'long', results: '200' },
             { id: '4', name: 'immediate', results: '0' },
             { id: '3', name: 'short', results: '100' },
@@ -137,18 +137,18 @@ describe('Supersequel', () => {
     })
 
     it('previous query results', done => {
-      supersequel
+      requestengine
         .middleware(
           {
             definitions: [
               {
                 name: 'thing.one',
-                statement: 'thing.one',
+                hql: 'thing.one',
                 access: ['user']
               },
               {
                 name: 'thing.two',
-                statement: 'thing.two is bigger than {{$history.one.[0]}}',
+                hql: 'thing.two is bigger than {{$history.one.[0]}}',
                 access: ['user']
               }
             ]
@@ -159,7 +159,7 @@ describe('Supersequel', () => {
               access: ['user']
             },
             body: {
-              queries: [
+              requests: [
                 {
                   id: 'one',
                   name: 'thing.one'
@@ -174,7 +174,7 @@ describe('Supersequel', () => {
           res
         )
         .then(() => {
-          expect(res.data.queries).toEqual([
+          expect(res.data.requests).toEqual([
             {
               id: 'one',
               name: 'thing.one',
@@ -194,13 +194,13 @@ describe('Supersequel', () => {
     })
 
     it('registered helpers', done => {
-      supersequel
+      requestengine
         .middleware(
           {
             definitions: [
               {
                 name: 'thing.one',
-                statement: 'thing.one {{_trim trimspace}}',
+                hql: 'thing.one {{_trim trimspace}}',
                 access: ['user']
               }
             ]
@@ -211,7 +211,7 @@ describe('Supersequel', () => {
               access: ['user']
             },
             body: {
-              queries: [
+              requests: [
                 {
                   id: '1',
                   name: 'thing.one',
@@ -225,7 +225,7 @@ describe('Supersequel', () => {
           res
         )
         .then(() => {
-          expect(res.data.queries).toEqual([
+          expect(res.data.requests).toEqual([
             {
               id: '1',
               name: 'thing.one',
@@ -242,13 +242,13 @@ describe('Supersequel', () => {
 
   describe('execute', () => {
     it('nested helpers', done => {
-      supersequel
+      requestengine
         .execute({
           user: {
             id: 123,
             access: ['user']
           },
-          queries: [
+          requests: [
             {
               id: '1',
               name: 'nested',
@@ -264,7 +264,7 @@ describe('Supersequel', () => {
           definitions: [
             {
               name: 'nested',
-              statement: [
+              hql: [
                 'UPDATE users SET ',
                 '{{#_trim ', '}}',
                 '{{#each fields}}',
@@ -278,8 +278,8 @@ describe('Supersequel', () => {
             }
           ]
         })
-        .then(({ queries }) => {
-          expect(queries).toEqual([
+        .then(({ requests }) => {
+          expect(requests).toEqual([
             {
               id: '1',
               name: 'nested',
@@ -297,13 +297,13 @@ describe('Supersequel', () => {
     })
 
     it('identfiers with alias', done => {
-      supersequel
+      requestengine
         .execute({
           user: {
             id: 123,
             access: ['user']
           },
-          queries: [
+          requests: [
             {
               name: 'alias',
               properties: {
@@ -321,13 +321,13 @@ describe('Supersequel', () => {
                 { name: 'first_name', alias: 'firstName' },
                 { name: 'last_name', alias: 'lastName' },
               ],
-              statement: 'SELECT {{:id select}} from users where firstName={{firstName}}',
+              hql: 'SELECT {{:id select}} from users where firstName={{firstName}}',
               access: ['user']
             }
           ]
         })
-        .then(({ queries }) => {
-          expect(queries).toEqual([
+        .then(({ requests }) => {
+          expect(requests).toEqual([
             {
               name: 'alias',
               results: [
@@ -344,13 +344,13 @@ describe('Supersequel', () => {
     })
 
     it('identfiers', done => {
-      supersequel
+      requestengine
         .execute({
           user: {
             id: 123,
             access: ['user']
           },
-          queries: [
+          requests: [
             {
               name: 'alias',
               properties: {
@@ -368,13 +368,13 @@ describe('Supersequel', () => {
                 { name: 'first_name' },
                 { name: 'last_name' },
               ],
-              statement: 'SELECT {{:id select}} from users where first_name={{first_name}}',
+              hql: 'SELECT {{:id select}} from users where first_name={{first_name}}',
               access: ['user']
             }
           ]
         })
-        .then(({ queries }) => {
-          expect(queries).toEqual([
+        .then(({ requests }) => {
+          expect(requests).toEqual([
             {
               name: 'alias',
               results: [
@@ -391,13 +391,13 @@ describe('Supersequel', () => {
     })
 
     it('async handler', done => {
-      supersequel
+      requestengine
         .execute({
           user: {
             id: 123,
             access: ['user']
           },
-          queries: [
+          requests: [
             {
               name: 'handler'
             }
@@ -414,8 +414,8 @@ describe('Supersequel', () => {
             }
           ]
         })
-        .then(({ queries }) => {
-          expect(queries).toEqual([{ name: 'handler', results: 1 } ])
+        .then(({ requests }) => {
+          expect(requests).toEqual([{ name: 'handler', results: 1 } ])
           done()
         })
         .catch(error => {
