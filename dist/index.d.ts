@@ -1,47 +1,46 @@
 import Ajv from 'ajv';
-import type { IConfig, IDefinition, IHistory, IRequest, IResponse, IQueryName, IQuery } from '../types.d.ts';
+import type { IConfig, IDefinition, IHistory, IRequest, IResponse, IHTTPRequest, IHTTPResponse, IRequestName } from '../types.d.ts';
 export type * from '../types.d.ts';
-export default class Supersequel {
+export default class RequestEngine {
     config: IConfig;
     constructor(config?: IConfig);
+    /**
+     * Hql
+     */
+    static hql(request: IRequest, definition: IDefinition, config: IConfig, history?: IHistory): Promise<unknown>;
     intersects(a: any[], b: any[]): boolean;
     /**
      * Validate Request
      */
     validateRequest(request: IRequest, inboundAjv: Ajv): boolean;
     /**
-     * Validate Query Definition
+     * Validate Request Definition
      */
-    validateQueryDefinition(definition: IDefinition, inboundAjv: Ajv): boolean;
+    validateRequestDefinition(definition: IDefinition, inboundAjv: Ajv): boolean;
     /**
      * Outbound
      */
-    outbound(response: IResponse, query: IQuery, definition: IDefinition, history: IHistory, data: unknown): void;
-    /**
-     * Query
-     */
-    query(request: IRequest, definition: IDefinition, config: IConfig, history?: IHistory): Promise<unknown>;
+    outbound(response: IResponse, request: IRequest, definition: IDefinition, history: IHistory, data: unknown): void;
     /**
      * Get Request Name
-     * @param {object} request
      */
-    getQueryName(request: IRequest): IQueryName;
+    getRequestName(request: IRequest): IRequestName;
     /**
-     * Query Error
+     * Request Error
      */
-    queryError(error: Error, request: IRequest, response: IResponse, config: IConfig): void;
+    requestError(error: Error, request: IRequest, response: IResponse, config: IConfig): void;
     /**
-     * Query middleware
+     * Request middleware
      * @param {object} config
      */
-    middleware(config?: IConfig): (req: IRequest, res: IResponse) => Promise<void>;
+    middleware(config?: IConfig): (req: IHTTPRequest, res: IHTTPResponse) => Promise<void>;
     /**
      * Execute queries
      */
-    execute(config: IConfig): Promise<IResponse>;
+    execute(config?: IConfig): Promise<IResponse>;
 }
 /**
  * Init
  */
-export declare function initSupersequel(config: IConfig): Supersequel;
+export declare function initRequestEngine(config: IConfig): RequestEngine;
 //# sourceMappingURL=index.d.ts.map

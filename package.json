@@ -1,6 +1,6 @@
 {
   "name": "@elseblock/requestengine",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "PostgreSQL paralell request api, using plain SQL parameterized statements built by handlebar templates, validated by json schema.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -20,6 +20,9 @@
   ],
   "author": "Jon Zumbrun",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "ajv": "^8.14.0",
     "ajv-keywords": "^5.1.0",
@@ -30,5 +33,10 @@
     "standard": "*",
     "ts-jest": "^29.1.4",
     "typescript": "^5.4.5"
+  },
+  "standard": {
+    "ignore": [
+      "dist/"
+    ]
   }
 }

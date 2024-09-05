@@ -31,7 +31,7 @@ const user = {
 }
 
 // Requests are supplied by a client request.
-const Requests = [{
+const requests = [{
     name: 'greetings',
     properties: {
         "accent": "british",

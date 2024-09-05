@@ -22,7 +22,7 @@ export default class RequestEngine {
    * Hql
    */
   static hql (request: IRequest, definition: IDefinition, config: IConfig, history: IHistory = {}): Promise<unknown> {
-    if (!definition.hql) throw new Error('Query definition requires a hql.')
+    if (!definition.hql) throw new Error('Request definition requires a hql.')
     const hqlEngine = new HqlEngine()
     const data = {
       ...(request.properties || {}),
@@ -73,9 +73,9 @@ export default class RequestEngine {
   }
 
   /**
-   * Validate Query Definition
+   * Validate Request Definition
    */
-  validateQueryDefinition (definition: IDefinition, inboundAjv: Ajv): boolean {
+  validateRequestDefinition (definition: IDefinition, inboundAjv: Ajv): boolean {
     return inboundAjv.validate(
       {
         type: 'object',
@@ -131,23 +131,23 @@ export default class RequestEngine {
   /**
    * Outbound
    */
-  outbound (response: IResponse, query: IRequest, definition: IDefinition, history: IHistory, data: unknown ): void {
+  outbound (response: IResponse, request: IRequest, definition: IDefinition, history: IHistory, data: unknown ): void {
     const outboundAjv = new Ajv({ useDefaults: true, removeAdditional: 'all' })
 
-    // Do we have proper outbound query schema
+    // Do we have proper outbound request schema
     if (definition.outboundSchema && !outboundAjv.validate(definition.outboundSchema, data)) {
       response.requests.push({
-        ...this.getRequestName(query),
+        ...this.getRequestName(request),
         error: {
           errno: 1005,
-          code: 'ERROR_QUERY_OUTBOUND_VALIDATION',
+          code: 'ERROR_REQUEST_OUTBOUND_VALIDATION',
           details: outboundAjv.errors
         }
       })
     } else {
-      if (query.id) history[query.id] = data
-      // Add succesfull query responses by id
-      response.requests.push({ ...this.getRequestName(query), results: data })
+      if (request.id) history[request.id] = data
+      // Add succesfull request responses by id
+      response.requests.push({ ...this.getRequestName(request), results: data })
     }
   }
 
@@ -160,13 +160,13 @@ export default class RequestEngine {
   }
 
   /**
-   * Query Error
+   * Request Error
    */
   requestError (error: Error, request: IRequest, response: IResponse, config: IConfig): void {
     // Do we have good sql hqls?
     const err: IError = {
       ...this.getRequestName(request),
-      error: { errno: 1006, code: 'ERROR_IMPROPER_QUERY_STATEMENT' }
+      error: { errno: 1006, code: 'ERROR_IMPROPER_REQUEST_STATEMENT' }
     }
     if (config.env === 'production') response.requests.push(err)
     else {
@@ -176,7 +176,7 @@ export default class RequestEngine {
   }
 
   /**
-   * Query middleware
+   * Request middleware
    * @param {object} config
    */
   middleware (config: IConfig = {}) {
@@ -212,7 +212,7 @@ export default class RequestEngine {
 
     try {
       for await (const request of config.requests) {
-        // Do we have proper query schema?
+        // Do we have proper request schema?
         if (!this.validateRequest(request, inboundAjv)) {
           response.requests.push({
             ...this.getRequestName(request),
@@ -225,24 +225,24 @@ export default class RequestEngine {
           continue
         }
 
-        // Do we have proper definition query schema?
+        // Do we have proper definition request schema?
         const definition = config.definitions?.find(q => q.name === request.name)
 
         // Do we have sql?
         if (!definition) {
           response.requests.push({
             ...this.getRequestName(request),
-            error: { errno: 1002, code: 'ERROR_QUERY_NOT_FOUND' }
+            error: { errno: 1002, code: 'ERROR_REQUEST_NOT_FOUND' }
           })
           continue
         }
 
-        if (!this.validateQueryDefinition(definition, inboundAjv)) {
+        if (!this.validateRequestDefinition(definition, inboundAjv)) {
           response.requests.push({
             ...this.getRequestName(request),
             error: {
               errno: 1001,
-              code: 'ERROR_QUERY_DEFINITION_VALIDATION',
+              code: 'ERROR_REQUEST_DEFINITION_VALIDATION',
               details: inboundAjv.errors
             }
           })
@@ -253,7 +253,7 @@ export default class RequestEngine {
         if (!this.intersects(definition.access, config.user?.access || [])) {
           response.requests.push({
             ...this.getRequestName(request),
-            error: { errno: 1003, code: 'ERROR_QUERY_NO_ACCESS' }
+            error: { errno: 1003, code: 'ERROR_REQUEST_NO_ACCESS' }
           })
           continue
         }
@@ -262,7 +262,7 @@ export default class RequestEngine {
         if (definition.handler && typeof definition.handler !== 'function') {
           response.requests.push({
             ...this.getRequestName(request),
-            error: { errno: 1008, code: 'ERROR_QUERY_HANDLER_NOT_FUNCTION' }
+            error: { errno: 1008, code: 'ERROR_REQUEST_HANDLER_NOT_FUNCTION' }
           })
           continue
         }
@@ -271,12 +271,12 @@ export default class RequestEngine {
         if (definition.handler && definition.hql) {
           response.requests.push({
             ...this.getRequestName(request),
-            error: { errno: 1009, code: 'ERROR_QUERY_HANDLER_AND_STATEMENT' }
+            error: { errno: 1009, code: 'ERROR_REQUEST_HANDLER_AND_STATEMENT' }
           })
           continue
         }
 
-        const queryPromise = new Promise<void>(async (resolve) => {
+        const requestPromise = new Promise<void>(async (resolve) => {
           try {
             // Do we have proper inbound request schema?
             let data: unknown
@@ -285,7 +285,7 @@ export default class RequestEngine {
                 ...this.getRequestName(request),
                 error: {
                   errno: 1004,
-                  code: 'ERROR_QUERY_INBOUND_VALIDATION',
+                  code: 'ERROR_REQUEST_INBOUND_VALIDATION',
                   details: inboundAjv.errors
                 }
               })
@@ -302,8 +302,8 @@ export default class RequestEngine {
             resolve()
           }
         })
-        if (!request.async) await queryPromise
-        else async.push(queryPromise)
+        if (!request.async) await requestPromise
+        else async.push(requestPromise)
       }
 
       // Process all of the async queries here

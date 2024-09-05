@@ -1,9 +1,9 @@
 import type { IHelper, IDefinition } from '../types';
 /**
- * Hql
+ * HqlEngine
  * (H)andebars s(ql)
  */
-export default class Hql {
+export default class HqlEngine {
     private instance;
     private HTMLEscapeExpression;
     private params;
@@ -48,4 +48,4 @@ export default class Hql {
      */
     registerHelpers(helpers?: IHelper[]): void;
 }
-//# sourceMappingURL=hql.d.ts.map
+//# sourceMappingURL=HqlEngine.d.ts.map
