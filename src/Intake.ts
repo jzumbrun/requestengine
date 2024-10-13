@@ -1,6 +1,6 @@
 import { Ajv } from 'ajv'
 import ajvKeywords from 'ajv-keywords'
-import { getRequestModel } from './toolBox.js'
+import { getRequestEngine } from './toolBox.js'
 import Cycle from './Cycle.js'
 
 /**
@@ -21,24 +21,24 @@ export default class Intake {
     // Do we have a cycle?
     if (!this.cycle.engine.model) {
       this.cycle.response.requests.push({
-        ...getRequestModel(this.cycle.request),
+        ...getRequestEngine(this.cycle.request),
         error: { errno: 2000, code: 'ERROR_REQUEST_NOT_FOUND' }
       })
       throw new Error('ERROR_REQUEST_NOT_FOUND')
     }
 
-    // Do we have keys?
-    if (!this.keysIntersects()) {
+    // Do we have the correct keys for the ignition?
+    if (!this.ignitionKeysIntersects()) {
       this.cycle.response.requests.push({
-        ...getRequestModel(this.cycle.request),
-        error: { errno: 2001, code: 'ERROR_REQUEST_NO_KEYS' }
+        ...getRequestEngine(this.cycle.request),
+        error: { errno: 2001, code: 'ERROR_REQUEST_WRONG_KEYS' }
       })
-      throw new Error('ERROR_REQUEST_NO_KEYS')
+      throw new Error('ERROR_REQUEST_WRONG_KEYS')
     }
 
-    if (!this.avj.validate(this.cycle.engine.intake, this.cycle.request.intake || null)) {
+    if (!this.avj.validate(this.cycle.engine.intake, this.cycle.request.fuel || null)) {
       this.cycle.response.requests.push({
-        ...getRequestModel(this.cycle.request),
+        ...getRequestEngine(this.cycle.request),
         error: {
           errno: 2003,
           code: 'ERROR_REQUEST_INTAKE_VALIDATION',
@@ -49,8 +49,8 @@ export default class Intake {
     }
   }
 
-  keysIntersects (): boolean {
-    const setA = new Set(this.cycle.engine.keys);
+  ignitionKeysIntersects (): boolean {
+    const setA = new Set(this.cycle.engine.ignition);
     return (this.cycle.rider?.keys || []).some(value => setA.has(value));
   }
 
@@ -62,24 +62,24 @@ export default class Intake {
       {
         type: 'object',
         properties: {
-          id: {
+          serial: {
             type: 'string',
             default: ''
           },
-          model: {
+          engine: {
             type: 'string',
             default: 'ERROR_MISSING_MODEL'
           },
-          intake: {
+          fuel: {
             type: ['number', 'integer', 'string', 'boolean', 'array', 'object', 'null']
           },
-          wait: {
+          timing: {
             type: 'boolean',
             default: false
           }
         },
         additionalProperties: false,
-        required: ['model']
+        required: ['engine']
       },
       this.cycle.request
     )

@@ -1,9 +1,9 @@
-import type { IRequest, IRequestModel } from '../types.js'
+import type { IRequest } from '../types.js'
 
 /**
- * Get Request Model
+ * Get Request Engine
  */
-export function getRequestModel (request: IRequest): IRequestModel {
-  if (request.serial) return { serial: request.serial, model: request.model }
-  return { model: request.model }
+export function getRequestEngine (request: IRequest): IRequest {
+  if (request.serial) return { serial: request.serial, engine: request.engine }
+  return { engine: request.engine }
 }

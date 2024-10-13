@@ -9,11 +9,11 @@ export type * from '../types.d.ts'
 export default class RequestEngine {
   readonly tuning: ITuning
 
-  constructor (tuning: ITuning = {}) {
-    tuning.engines = tuning.engines || []
+  constructor (tuning: ITuning) {
+    tuning.engines = tuning.engines
     tuning.env = process.env.NODE_ENV || 'production'
     tuning.neutral = tuning.neutral || undefined
-    tuning.drive = tuning.drive || undefined
+    tuning.drive = tuning.drive
     this.tuning = tuning
   }
 

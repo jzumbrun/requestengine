@@ -18,21 +18,36 @@ export default class Start {
 
   turnOver(): never | void {
 
-    if (!this.tuning.engines?.length) {
-      throw new EngineError(1000, 'ERROR_MISSING_ENGINES')
-    } 
+    if (!this.checkTuning()) {
+      throw new EngineError(1000, 'ERROR_REQUEST_ENGINE_VALIDATION', this.avj.errors)
+    }
 
-    for(const engine of this.tuning.engines) {
-      if (!this.check(engine)) {
-        throw new EngineError(1001, 'ERROR_REQUEST_ENGINE_VALIDATION', this.avj.errors)
+    for(const engine of this.tuning.engines!) {
+      if (!this.checkEngines(engine)) {
+        throw new EngineError(1001, 'ERROR_REQUEST_ENGINE_ENGINES_VALIDATION', this.avj.errors)
       }
     }
   }
 
+  checkTuning() {
+    return this.avj.validate({
+      type: 'object',
+      properties: {
+        engines: { type: 'array' },
+        env: { type: 'string' },
+        tools: { type: 'array' },
+        neutral: { typeof: 'function' },
+        drive: { typeof: 'function' }
+      },
+      required: ['engines', 'drive'],
+      additionalProperties: false
+    }, this.tuning)
+  }
+
   /**
-   * Check
+   * Check Engines
    */
-  check (engine: IEngine): boolean {
+  checkEngines (engine: IEngine): boolean {
     return this.avj.validate(
       {
         type: 'object',
@@ -56,7 +71,7 @@ export default class Start {
             type: 'object',
             default: {}
           },
-          keys: {
+          ignition: {
             type: 'array',
             default: []
           },
@@ -72,7 +87,7 @@ export default class Start {
           type: 'object', required: ['compression'] },{ 
           type: 'object', required: ['power'] }],
         additionalProperties: false,
-        required: [ 'model', 'intake', 'exhaust', 'keys']
+        required: [ 'model', 'intake', 'exhaust', 'ignition' ]
       },
       engine
     )

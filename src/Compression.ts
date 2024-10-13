@@ -25,17 +25,15 @@ export default class Compression {
   }
 
   public stroke (): Promise<unknown> {
-    if (!this.cycle.engine.compression) throw new Error('Request engines requires a compress property.')
     const data = {
-      intake: this.cycle.request.intake,
+      intake: this.cycle.request.fuel,
       rider: this.cycle.rider,
       odometer: this.cycle.odometer,
       engines: this.cycle.engine
     }
     this.registerTools(this.cycle.tuning.tools)
-    const compiled = this.compile(this.cycle.engine.compression, data)
-    if (!this.cycle.tuning.drive) throw new Error('tuning.drive is required in either the main or middleware config.')
-    return this.cycle.tuning.drive(compiled, this.getParams())
+    const compiled = this.compile(this.cycle.engine.compression!, data)
+    return this.cycle.tuning.drive!(compiled, this.getParams())
   }
 
   static compression (query: string, cycle: Cycle): Promise<unknown> {

@@ -38,21 +38,21 @@ describe('RequestEngine', () => {
     it('{riders.update}', done => {
       start([{
           model: '{riders.update}',
-          compression: 'UPDATE riders SET {{intake.rider}} WHERE id = {{rider.id}}',
+          compression: 'UPDATE riders SET {{intake.rider}} WHERE id = {{rider.license}}',
           intake: { type: 'object', properties: { rider: { type: 'object' } } },
           exhaust: { type: 'array' },
-          keys: ['rider']
+          ignition: ['rider']
       }]).middleware()(
           {
             rider: {
-              id: 123,
+              license: 123,
               keys: ['rider']
             },
             body: {
               requests: [
                 {
-                  model: '{riders.update}',
-                  intake: {
+                  engine: '{riders.update}',
+                  fuel: {
                     rider: { name: 'Jon', age: 33 }
                   }
                 }
@@ -79,48 +79,48 @@ describe('RequestEngine', () => {
             compression: '0',
             intake: { type: 'null' },
             exhaust: { type: 'string' },
-            keys: ['rider']
+            ignition: ['rider']
           },
           {
             model: 'short',
             compression: '100',
             intake: { type: 'null' },
             exhaust: { type: 'string' },
-            keys: ['rider']
+            ignition: ['rider']
           },
           {
             model: 'long',
             compression: '200',
             intake: { type: 'null' },
             exhaust: { type: 'string' },
-            keys: ['rider']
+            ignition: ['rider']
           }
         ]
       ).middleware()(
           {
             rider: {
-              id: 123,
+              license: 123,
               keys: ['rider']
             },
             body: {
               requests: [
                 {
                   serial: '1',
-                  model: 'long',
+                  engine: 'long',
                 },
                 {
                   serial: '2',
-                  model: 'long',
+                  engine: 'long',
                   timing: false
                 },
                 {
                   serial: '3',
-                  model: 'short',
+                  engine: 'short',
                   timing: false
                 },
                 {
                   serial: '4',
-                  model: 'immediate',
+                  engine: 'immediate',
                 }
               ]
             }
@@ -129,10 +129,10 @@ describe('RequestEngine', () => {
         )
         .then(() => {
           expect(res.data.requests).toEqual([
-            { serial: '1', model: 'long', results: '200' },
-            { serial: '4', model: 'immediate', results: '0' },
-            { serial: '3', model: 'short', results: '100' },
-            { serial: '2', model: 'long', results: '200' }
+            { serial: '1', engine: 'long', results: '200' },
+            { serial: '4', engine: 'immediate', results: '0' },
+            { serial: '3', engine: 'short', results: '100' },
+            { serial: '2', engine: 'long', results: '200' }
           ])
           done()
         })
@@ -148,30 +148,30 @@ describe('RequestEngine', () => {
           compression: 'thing.one',
           intake: { type: 'null' },
           exhaust: { type: 'array' },
-          keys: ['rider']
+          ignition: ['rider']
         },
         {
           model: 'thing.two',
           compression: 'thing.two is bigger than {{odometer.one.[0]}}',
           intake: { type: 'null' },
           exhaust: { type: 'array' },
-          keys: ['rider']
+          ignition: ['rider']
         }
       ]).middleware()(
           {
             rider: {
-              id: 123,
+              license: 123,
               keys: ['rider']
             },
             body: {
               requests: [
                 {
                   serial: 'one',
-                  model: 'thing.one'
+                  engine: 'thing.one'
                 },
                 {
                   serial: 'two',
-                  model: 'thing.two'
+                  engine: 'thing.two'
                 }
               ]
             }
@@ -182,12 +182,12 @@ describe('RequestEngine', () => {
           expect(res.data.requests).toEqual([
             {
               serial: 'one',
-              model: 'thing.one',
+              engine: 'thing.one',
               results: ['thing.one', []]
             },
             {
               serial: 'two',
-              model: 'thing.two',
+              engine: 'thing.two',
               results: ["thing.two is bigger than $1", ['thing.one']]
             }
           ])
@@ -205,20 +205,20 @@ describe('RequestEngine', () => {
           compression: 'thing.one {{_trim intake.trimspace}}',
           intake: { type: 'object', properties: { trimspace: { type: 'string'} } },
           exhaust: { type: 'array' },
-          keys: ['rider']
+          ignition: ['rider']
         }
       ]).middleware()(
           {
             rider: {
-              id: 123,
+              license: 123,
               keys: ['rider']
             },
             body: {
               requests: [
                 {
                   serial: '1',
-                  model: 'thing.one',
-                  intake: {
+                  engine: 'thing.one',
+                  fuel: {
                     trimspace: '  nospaces   '
                   }
                 }
@@ -231,7 +231,7 @@ describe('RequestEngine', () => {
           expect(res.data.requests).toEqual([
             {
               serial: '1',
-              model: 'thing.one',
+              engine: 'thing.one',
               results: ["thing.one $1", ['nospaces']]
             }
           ])
@@ -260,13 +260,13 @@ describe('RequestEngine', () => {
           ].join(''),
           intake: { type: 'object', properties: { fields: { type: 'object' } } },
           exhaust: { type: 'array' },
-          keys: ['rider']
+          ignition: ['rider']
         }
       ]).run([
         {
           serial: '1',
-          model: 'nested',
-          intake: {
+          engine: 'nested',
+          fuel: {
             fields: {
               column1: 3,
               column2: '  hello  '
@@ -274,14 +274,14 @@ describe('RequestEngine', () => {
           }
         }
       ], {
-        id: 123,
+        license: 123,
           keys: ['rider']
       })
       .then(({ requests }) => {
         expect(requests).toEqual([
           {
             serial: '1',
-            model: 'nested',
+            engine: 'nested',
             results: [
               'UPDATE riders SET $1 = $2, $3 = $4,',
               ['column1', 3, 'column2', 'hello']
@@ -305,25 +305,25 @@ describe('RequestEngine', () => {
           } } } },
           exhaust: { type: 'array' },
           compression: 'SELECT {{:throttle intake.select}} from riders where firstName = {{intake.firstName}}',
-          keys: ['rider']
+          ignition: ['rider']
         }
       ]).run([
         {
-          model: 'alias',
-          intake: {
+          engine: 'alias',
+          fuel: {
             firstName: 'Abe',
             select: ['lastName'],
           }
         }
       ], {
-            id: 123,
+            license: 123,
             keys: ['rider']
           },
       )
       .then(({ requests }) => {
         expect(requests).toEqual([
           {
-            model: 'alias',
+            engine: 'alias',
             results: [
               'SELECT "last_name" as "lastName" from riders where firstName = $1',
               ['Abe']
@@ -348,20 +348,20 @@ describe('RequestEngine', () => {
               setTimeout(() => { resolve(1) }, 0)
             })
           },
-          keys: ['rider']
+          ignition: ['rider']
         }
       ])
         .run([
           {
-            model: 'power'
+            engine: 'power'
           }
         ], {
-          id: 123,
+          license: 123,
           keys: ['rider']
         }
       )
       .then(({ requests }) => {
-        expect(requests).toEqual([{ model: 'power', results: 1 } ])
+        expect(requests).toEqual([{ engine: 'power', results: 1 } ])
         done()
       })
       .catch(error => {

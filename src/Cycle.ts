@@ -1,5 +1,5 @@
 import type { ITuning, IEngine, IOdometer, IRequest, IResponse, IRider } from '../types.js'
-import { getRequestModel } from './toolBox.js'
+import { getRequestEngine } from './toolBox.js'
 import Intake from './Intake.js'
 import Compression from './Compression.js'
 import Power from './Power.js'
@@ -30,8 +30,8 @@ export default class Cycle {
     this.timing = async
     this.rider = rider
     this.tuning = tuning
-    this.engine = this.tuning.engines?.find((engine) => engine.model === request.model)
-      || { model: '', keys: [], intake: {}, exhaust: {} }
+    this.engine = this.tuning.engines?.find((engine) => engine.model === request.engine)
+      || { model: '', ignition: [], intake: {}, exhaust: {} }
 
   }
 
@@ -71,7 +71,7 @@ export default class Cycle {
   */
   private cycleError (error: Error): void {
     // Do we have good query?
-    const err = new RequestError(getRequestModel(this.request), 1006, 'ERROR_IMPROPER_REQUEST_STATEMENT')
+    const err = new RequestError(getRequestEngine(this.request), 1006, 'ERROR_IMPROPER_REQUEST_STATEMENT')
     if (this.tuning.env !== 'production') err.details = error.message
     this.response.requests.push(err)
   }

@@ -1,7 +1,7 @@
 import { Ajv } from 'ajv'
 import ajvKeywords from 'ajv-keywords'
 import Cycle from './Cycle.js'
-import { getRequestModel } from './toolBox.js'
+import { getRequestEngine } from './toolBox.js'
 
 /**
  * Exhaust
@@ -22,7 +22,7 @@ export default class Exhaust {
     // Do we have proper exhaust schema
     if (this.cycle.engine.exhaust && !this.avj.validate(this.cycle.engine.exhaust, this.data)) {
       this.cycle.response.requests.push({
-        ...getRequestModel(this.cycle.request),
+        ...getRequestEngine(this.cycle.request),
         error: {
           errno: 1005,
           code: 'ERROR_REQUEST_EXHAUST_VALIDATION',
@@ -32,7 +32,7 @@ export default class Exhaust {
     } else {
       if (this.cycle.request.serial) this.cycle.odometer[this.cycle.request.serial] = this.data
       // Add succesfull request responses by id
-      this.cycle.response.requests.push({ ...getRequestModel(this.cycle.request), results: this.data })
+      this.cycle.response.requests.push({ ...getRequestEngine(this.cycle.request), results: this.data })
     }
   }
 

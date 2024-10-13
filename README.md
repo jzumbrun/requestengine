@@ -1,89 +1,105 @@
 # RequestEngine
 
-RequestEngine is a logic-less PostgreSQL parameterized paralell request api, using plain SQL statements built by handlebar templates, validated by json schema.
+RequestEngine is a "code-less" as in less code, PostgreSQL parameterized paralell request api, using plain SQL statements managed by handlebar templates, and validated by json schema. RequestEngine simplifies the majority of handling client requests securely passing data to PostgreSQL statements.   
+   
+RequestEngine is highly architected around the concept of a motorcyle and it's engine, where a four cycle engine has 4 cycles including intake -> compression -> power -> exhaust.   
+These cycles align with the requirements to validate requests and provide server actions. (intake) and (exhaust) provide input/output validations. (compression) and (power) provide server actions via a powerful SQL statement (compression) or a (power) handler that allows for full logical programming.
+   
+RequestEngine, similar to GraphQL, can wrap up multiple resource requests and mutations into one api call, thus reducing
+the chattiness of SPAs. Also all requests are POSTS regardless of the request actions.   
+  
 
-RequestEngine, inspired by GraphQL, can wrap up multiple resource requests and mutations into one api call, thus reducing
-the chattiness of SPAs. Similar to GraphQL, all requests are POSTS regardless of the query actions.
-
+## Client -> Server Property Flow
+The client request properties align with the server properties as follows. These will be explained in detail later: 
+   
+ - engine  ->  model
+    - The client engine will request the server engine's model   
+ - fuel    ->  intake
+    - The client fuel will provide data to the server engine's intake
+ - keys    ->  ignition
+    - The client keys must have one value that matches the server engine's ignition
+   
 
 ## Client Requests
-Each request requires a model, an optional serial, wait and properties object (as defined by the request cycle).
+Each request requires an engine, an optional serial, timing and fuel object.
 
-- serial: Required if using the same request engine model multiple times, or if using previous request's response odometer.
-- model: The model is used to find the defined request engine model.
-- intake: Data values supplied to the statement query string.
-- timing: timing set to false will allow requests to be called asynchronously.
+- engine!: string; The engine model is used to find the defined request engine model.
+- serial?: string; Required if using the same request engine model multiple times, or if using previous request's response odometer.
+- fuel?: number, integer, string, boolean, array,object, null; Data values supplied to the compression string, or power handler.
+- timing?: boolean; Timing set to false will allow requests to be called asynchronously.
 
 
 ```
-// Cycles are supplied by the server
-const cycles = [{
-    model: 'greetings',
-    compression:
-        'SELECT * FROM greetings WHERE `accent`={{accent}}',
-    keys: ['user']
+// Engines are supplied by the server
+const engines = [{
+    model: 'notes',
+    compression: 'SELECT * FROM notes WHERE tag = {{intake.tag}} and user_id = {{rider.license}}',
+    ignition: ['canRead']
 }];
 
-// User info is supplied by an auth layer, like jwt.
-const user = {
-    id: 123,
-    keys: ['user']
+// Rider, aka `user` info is supplied by an auth layer, like jwt on the server.
+const rider = {
+    license: 123, // unique value
+    keys: ['canRead'] // at least one value must match the engine's ignition.
 }
 
 // Requests are supplied by a client request.
 const requests = [{
-    model: 'greetings',
-    intake: {
-        "accent": "british",
-    }
+    engine: 'notes',
+    fuel: { tag: 'groceries'}
 }]
 
 const requestengine = initRequestEngine({
-    cycles,
-    query: q => pg.query(q)
+    engines,
+    drive: q => pg.query(q)
 })
-requestengine.execute({ user, requests })
+requestengine.run({ rider, requests })
 ```
 
 A middleware for express is also provided with a query callback to a live database connection:
 
 ```
 const requestengine = initRequestEngine({
-    cycles,
-    query: q => pg.query(q)
+    engines,
+    drive: q => pg.query(q)
 })
 
 app.post('/requests', requestengine.middleware())
 ```
 
-## Request Cycles
+## Request Engines
 
-Each cycles is given a model, an compression statement, an keys list, and an intake schema.
+Each engine is given a model, an compression statement, a keys list, and an intake schema.
 
-- model: Model should reflect the resource and action. This is only a convention. But it must be unique.   
-- compression: The compression statement is a simple SQL statement managed by handlebars. Handlebars will take care of sql injections using postgres parameterization.   
-We have taken the liberty to add all lodash functions to handlebars for convenience. Thay are defined as `_trim`, etc.
-All successfull requests responses within a client request will be available to subseqent requests in the odometer object.
-An id is required on the request in order to keys it in the odometer object. All requests are run synchronous by default in the order provided. Setting wait to true, will allow for asynchronous calls, but the odometer timeline cannot be guaranteed.
-- power: The power handler is optional and cannot be combined with the compression property. It is a handling function that allows for more flexible control over the request if more complex logic is need that the compression statement alone, cannot provide. The power handler has properties to a compression function to make query calls along with all other data in the request pipeline.
-- keys: The keys array is a list for authorized keys to each query.   
-- intake: Inbound schema utilizes json schema and validates inbound data.   
-- exhaust: Outbound schema utilizes json schema and validates data coming from the database response.   
-    If properties are not defined, they will be removed form the outbound response.
+- model!: string; Model should reflect the resource and action, like "notes.update". This is only a convention. But it must be unique.   
+- compression?: string; The `compression` property is a simple SQL statement managed by handlebars. Handlebars will take care of sql injections using postgres parameterization. Any value within {{}} will be evaluated, and postgres escaped by handlebars. Available handlebar helper functions need to be supplied to `initRequestEngine()` function.   
+The following are properties provided to the compression string:
+
+    - odometer: All successfull request responses within a client request will be available to subseqent requests in the `odometer` object, if the serial property is set.
+    - rider: The values for `rider.license` and `rider.keys` will be available to authenticate against database user identifiers.
+    - intake: All request's `fuel` values will be available within the `intake` property.
+
+All requests are run synchronous by default in the order provided. Setting the `timing` property to true, will allow for asynchronous calls, but the odometer timeline cannot be guaranteed.
+- power?: (strokes: IStroke, compression: Compression.compression) => any; The `power` handler is optional and cannot be combined with the compression property. It is a handling function that allows for more flexible control over the request if more complex logic is needed that the compression statement alone, cannot provide. The `power` handler passes a compression function to allow code to make query calls along with all other data in the request pipeline.
+- ignition!: string[]; The `ignition` property array is a list for authorized keys for each engine model.   
+- intake!: AnySchema; The `intake` property is an avj json schema that validates inbound data.   
+- exhaust!: AnySchema; The `exhaust` property is an avj json schema that validates outbound data.
+
+## Server Engine Examples
+
 ```
 {
-    "id": "greetings.insert",
-    "model": "greetings.insert",
-    "compression": "INSERT INTO greetings (description, words, rider_id) VALUES ('{{description}}', '{{words}}', {{rider.id}})",
-    "keys": ["user"],
-    "intake": {
+    "model": "notes.insert",
+    "compression": "INSERT INTO notes (title, body, user_id) VALUES ('{{intake.title}}', '{{intake.body}}', {{rider.id}})",
+    "ignition": ["canWrite"],
+    "fuel": {
         "type": "object",
         "properties": {
-            "description": {
+            "title": {
                 "type": "string",
                 "default": ""
             },
-            "words": {
+            "body": {
                 "type": "string",
                 "default": ""
             }
@@ -92,9 +108,10 @@ An id is required on the request in order to keys it in the odometer object. All
     }
 },
 {
-    "model": "greetings.select.byId",
-    "compression": "SELECT {{:id select}} FROM greetings WHERE rider_id={{rider.id}} AND id={{odometer[greetings.insert].id}} LIMIT {{limit}}",
-    "keys": ["user"],
+    "model": "notes.select.byId",
+    "compression": "SELECT {{:throttle intake.select}} FROM greetings WHERE user_id={{rider.license}} AND id={{odometer[notes.insert].id}} LIMIT {{limit}}",
+    "ignition": ["canWrite"],
+    "throttle": ["id", "title", "body", "tag"],
     "intake": {
         "type": "object",
         "properties": {
@@ -116,8 +133,8 @@ An id is required on the request in order to keys it in the odometer object. All
             "type": "object",
             "properties": {
                 "id": { "type": "number"},
-                "description": { "type": "string"},
-                "words": { "type": "string"}
+                "title": { "type": "string"},
+                "body": { "type": "string"}
             }
         }
     }

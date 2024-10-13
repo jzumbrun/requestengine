@@ -1,10 +1,10 @@
-import type { IRequestModel } from '../../types.d.ts'
+import type { IRequest } from '../../types.d.ts'
 import EngineError from './EngineError.js'
 
 export default class RequestError extends EngineError {
-  request: IRequestModel
+  request: IRequest
 
-  constructor(request: IRequestModel, errno: number, code: string, details?: any) {
+  constructor(request: IRequest, errno: number, code: string, details?: any) {
     super(errno, code, details)
     this.request = request
   }

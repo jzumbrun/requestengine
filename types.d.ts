@@ -10,16 +10,16 @@ export interface ICycle {
 }
 
 export interface ITuning {
-  engines?: IEngine[]
+  engines: IEngine[]
   env?: string
   tools?: ITool[]
   neutral?: (...args: any[]) => any
-  drive?: (statement: string, data: any) => Promise<any>
+  drive: (statement: string, data: any) => Promise<any>
 }
 
 export interface IEngine {
   model: string
-  keys: string[]
+  ignition: string[]
   intake: AnySchema
   exhaust: AnySchema
   compression?: string
@@ -32,7 +32,7 @@ export interface IOdometer {
 }
 
 export interface IRider {
-  id: number | string
+  license: number | string
   keys: string[]
 }
 
@@ -47,18 +47,13 @@ export interface IHTTPResponse {
 
 export interface IRequest {
   serial?: string
-  model: string
-  intake?: unknown
+  engine: string
+  fuel?: unknown
   timing?: boolean
 }
 
 export interface IResponse {
   requests: any[]
-}
-
-export interface IRequestModel {
-  serial?: string
-  model?: string
 }
 
 export interface ITool { 
