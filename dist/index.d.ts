@@ -1,46 +1,23 @@
-import Ajv from 'ajv';
-import type { IConfig, IDefinition, IHistory, IRequest, IResponse, IHTTPRequest, IHTTPResponse, IRequestName } from '../types.d.ts';
+import type { ITuning, IRider, IRequest, IResponse, IHTTPRequest, IHTTPResponse } from '../types.d.js';
 export type * from '../types.d.ts';
 export default class RequestEngine {
-    config: IConfig;
-    constructor(config?: IConfig);
+    readonly tuning: ITuning;
+    constructor(tuning?: ITuning);
     /**
-     * Hql
+     * Start
      */
-    static hql(request: IRequest, definition: IDefinition, config: IConfig, history?: IHistory): Promise<unknown>;
-    intersects(a: any[], b: any[]): boolean;
-    /**
-     * Validate Request
-     */
-    validateRequest(request: IRequest, inboundAjv: Ajv): boolean;
-    /**
-     * Validate Request Definition
-     */
-    validateRequestDefinition(definition: IDefinition, inboundAjv: Ajv): boolean;
-    /**
-     * Outbound
-     */
-    outbound(response: IResponse, request: IRequest, definition: IDefinition, history: IHistory, data: unknown): void;
-    /**
-     * Get Request Name
-     */
-    getRequestName(request: IRequest): IRequestName;
-    /**
-     * Request Error
-     */
-    requestError(error: Error, request: IRequest, response: IResponse, config: IConfig): void;
+    start(): void;
     /**
      * Request middleware
-     * @param {object} config
      */
-    middleware(config?: IConfig): (req: IHTTPRequest, res: IHTTPResponse) => Promise<void>;
+    middleware(): (req: IHTTPRequest, res: IHTTPResponse) => Promise<void>;
     /**
      * Execute queries
      */
-    execute(config?: IConfig): Promise<IResponse>;
+    run(requests: IRequest[], rider: IRider): Promise<IResponse>;
 }
 /**
- * Init
+ * Start
  */
-export declare function initRequestEngine(config: IConfig): RequestEngine;
+export declare function kickStart(tuning: ITuning): RequestEngine;
 //# sourceMappingURL=index.d.ts.map

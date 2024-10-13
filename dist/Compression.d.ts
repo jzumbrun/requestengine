@@ -1,15 +1,18 @@
-import type { ITool, ICycle } from '../types';
+import type { IEngine, ITool } from '../types.d.js';
+import Cycle from './Cycle.js';
 /**
- * HqlEngine
- * (H)andebars s(ql)
+ * Compression
  */
-export default class HqlEngine {
-    private instance;
+export default class Compression {
+    private cycle;
+    private handlebars;
     private HTMLEscapeExpression;
     private params;
-    constructor();
-    getParams(): unknown[];
-    escapeIdentifier(str: string): string;
+    constructor(cycle: Cycle);
+    stroke(): Promise<unknown>;
+    static compression(query: string, cycle: Cycle): Promise<unknown>;
+    private getParams;
+    private escapeIdentifier;
     /**
      * Compile
      * Allows us to override the escape expression just for this compile call.
@@ -32,7 +35,7 @@ export default class HqlEngine {
      */
     private arrayToList;
     /**
-     * Object to Identifier
+     * Object to Throttle
      */
     private objectToIdentifier;
     /**
@@ -40,12 +43,12 @@ export default class HqlEngine {
      */
     private objectToValues;
     /**
-     * Identifiers
+     * Throttle To Identifiers
      */
-    identifiers(cycleIdentifiers: ICycle['identifiers'], value: unknown): unknown;
+    throttleToIdentifiers(enginesThrottle: IEngine['throttle'], value: unknown): unknown;
     /**
      * Register Tools
      */
     registerTools(tools?: ITool[]): void;
 }
-//# sourceMappingURL=HqlEngine.d.ts.map
+//# sourceMappingURL=Compression.d.ts.map

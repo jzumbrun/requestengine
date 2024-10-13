@@ -1,5 +1,7 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
-module.exports = {
+export default {
   preset: 'ts-jest',
-  testEnvironment: 'node'
+  testEnvironment: 'node',
+  testPathIgnorePatterns: ['<rootDir>/dist/', '<rootDir>/node_modules/'],
+  moduleNameMapper: { '(.+)\\.js': '$1' }
 }

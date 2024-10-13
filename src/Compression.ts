@@ -1,33 +1,54 @@
+import type { IEngine, ITool } from '../types.d.js'
+import Cycle from './Cycle.js'
 // Import necessary modules
 import Handlebars, { Utils } from 'handlebars'
-import type { IHelper, IDefinition, IIdentifier } from '../types'
 
 interface IIdentifierParameter {
-  __identifier__: IIdentifier
+  __identifier__: { name: string, alias: string }
 }
 
 /**
- * HqlEngine
- * (H)andebars s(ql)
+ * Compression
  */
-export default class HqlEngine {
-  private instance: typeof Handlebars 
-
+export default class Compression {
+  private cycle: Cycle
+  private handlebars: typeof Handlebars 
   private HTMLEscapeExpression: typeof Utils.escapeExpression
-
   private params: unknown[]
 
-  constructor() {
-    this.instance = Handlebars.create()
-    this.HTMLEscapeExpression = this.instance.Utils.escapeExpression
+  constructor(cycle: Cycle) {
+    this.cycle = cycle
+    this.handlebars = Handlebars.create()
+    this.HTMLEscapeExpression = this.handlebars.Utils.escapeExpression
     this.params = []
+    
   }
 
-  getParams(): unknown[] {
+  public stroke (): Promise<unknown> {
+    if (!this.cycle.engine.compression) throw new Error('Request engines requires a compress property.')
+    const data = {
+      intake: this.cycle.request.intake,
+      rider: this.cycle.rider,
+      odometer: this.cycle.odometer,
+      engines: this.cycle.engine
+    }
+    this.registerTools(this.cycle.tuning.tools)
+    const compiled = this.compile(this.cycle.engine.compression, data)
+    if (!this.cycle.tuning.drive) throw new Error('tuning.drive is required in either the main or middleware config.')
+    return this.cycle.tuning.drive(compiled, this.getParams())
+  }
+
+  static compression (query: string, cycle: Cycle): Promise<unknown> {
+    cycle.engine.compression = query
+    const compression = new Compression(cycle)
+    return compression.stroke()
+  }
+
+  private getParams(): unknown[] {
     return this.params
   }
 
-  escapeIdentifier (str: string): string {
+  private escapeIdentifier (str: string): string {
     return '"' + str.replace(/"/g, '""') + '"'
   }
 
@@ -38,7 +59,7 @@ export default class HqlEngine {
   public compile(statement: string, data: object): string {
     this.params = []
     this.registerEscapeExpression()
-    const compiled = this.instance.compile(statement)(data)
+    const compiled = this.handlebars.compile(statement)(data)
     this.unRegisterEscapeExpression()
     return compiled
   }
@@ -47,7 +68,7 @@ export default class HqlEngine {
    * Register Escape Expression
    */
   private registerEscapeExpression(): void {
-    this.instance.Utils.escapeExpression = (value: unknown) => {
+    this.handlebars.Utils.escapeExpression = (value: unknown) => {
       return this.parameterize(value)
     }
   }
@@ -76,7 +97,7 @@ export default class HqlEngine {
    * Unregister Escape Expression
    */
   private unRegisterEscapeExpression(): void {
-    this.instance.Utils.escapeExpression = this.HTMLEscapeExpression
+    this.handlebars.Utils.escapeExpression = this.HTMLEscapeExpression
   }
 
   /**
@@ -95,7 +116,7 @@ export default class HqlEngine {
   }
 
   /**
-   * Object to Identifier
+   * Object to Throttle
    */
   private objectToIdentifier({ name, alias }: IIdentifierParameter['__identifier__']): string {
     return (alias)
@@ -119,14 +140,15 @@ export default class HqlEngine {
   }
 
   /**
-   * Identifiers
+   * Throttle To Identifiers
    */
-  public identifiers(definitionIdentifiers: IDefinition['identifiers'], value: unknown): unknown {
-    if(!definitionIdentifiers) return value
+  public throttleToIdentifiers(enginesThrottle: IEngine['throttle'], value: unknown): unknown {
+    if(!enginesThrottle) return value
 
     let identifiers: IIdentifierParameter[] = []
     value = Array.isArray(value) ? value : [value]
-    definitionIdentifiers.forEach(({ name, alias }) => {
+    enginesThrottle.forEach((throttle: string) => {
+      const [name, alias] = throttle.split(' as ') as [string, string]
       (value as unknown[]).forEach((val: unknown) => {
         if (val === name || val === alias) identifiers.push({ __identifier__: { name, alias } })
       })
@@ -135,55 +157,52 @@ export default class HqlEngine {
   }
 
   /**
-   * Register Helpers
+   * Register Tools
    */
-  public registerHelpers(helpers: IHelper[] = []): void {
+  public registerTools(tools: ITool[] = []): void {
     const $this = this
-    const instance = $this.instance
-    helpers.push({
+    const handlebars = $this.handlebars
+    tools.push({
       prefix: ':',
-      functions: {
+      tools: {
         // Identifiers Select statements
-        id: function (value: unknown, context: any) {
-          return $this.identifiers(context.data.root.$definition.identifiers, value)
-        },
-        ht: function (value: unknown) {
-          return $this.HTMLEscapeExpression(value as string)
-        },
+        throttle: function (value: unknown, context: { data: { root: { engines: IEngine } } }) {
+          return $this.throttleToIdentifiers(context.data.root.engines.throttle, value)
+        }
       },
     })
 
-    for (const helper of helpers) {
+    for (const tool of tools) {
       // Set defaults
-      helper.functions = helper.functions || {}
-      helper.prefix = helper.prefix || ''
-      helper.context = helper?.context ?? true
-      // Register a helper for every function
-      for (const funk in helper.functions) {
-        if (instance.Utils.isFunction(helper.functions[funk])) {
-          if (helper.context) {
+      tool.tools = tool.tools || {}
+      tool.prefix = tool.prefix || ''
+      tool.context = tool?.context ?? true
+      // Register a tool for every function
+      for (const funk in tool.tools) {
+        if (handlebars.Utils.isFunction(tool.tools[funk])) {
+          if (tool.context) {
             // Native handlebars context use
-            instance.registerHelper(
-              `${helper.prefix}${funk}`,
-              helper.functions[funk]
+            handlebars.registerHelper(
+              `${tool.prefix}${funk}`,
+              tool.tools[funk]
             )
           } else {
             // Remove context from `this` and first arg
-            // Useful for black box functions like lodash/underscore
-            instance.registerHelper(
-              `${helper.prefix}${funk}`,
+            // Useful for black box tools like lodash/underscore
+            handlebars.registerHelper(
+              `${tool.prefix}${funk}`,
               function (...args: any[]) {
                 // Take handlebar's context from the beginning
                 const context = args.pop()
                 // Are we dealing with a block?
-                if (instance.Utils.isFunction(context.fn)) {
-                  return helper.functions[funk](
+                if (handlebars.Utils.isFunction(context.fn)) {
+                  return tool.tools[funk](
                     // @ts-ignore ts(2683)
                     context.fn(this),
                     ...args
                   )
                 }
-                return helper.functions[funk](...args)
+                return tool.tools[funk](...args)
               }
             )
           }

@@ -1,52 +1,44 @@
 import type { AnySchema } from 'ajv'
+import type Compression from './src/Compression.js'
 
-export interface IConfig {
-  definitions?: IDefinition[]
+export interface ICycle {
+  tuning: ITuning,
+  request: IRequest,
+  response: IResponse,
+  cycle: ICycle,
+  odometer: IOdometer
+}
+
+export interface ITuning {
+  engines?: IEngine[]
   env?: string
-  helpers?: IHelper[]
-  user?: IUser
-  requests?: IQuery[]
-  body?: IQuery[]
-  release?: (...args: any[]) => any
-  query?: (statement: string, data: any) => Promise<any>
+  tools?: ITool[]
+  neutral?: (...args: any[]) => any
+  drive?: (statement: string, data: any) => Promise<any>
 }
 
-export interface IIdentifier {
-  name: string
-  alias?: string 
+export interface IEngine {
+  model: string
+  keys: string[]
+  intake: AnySchema
+  exhaust: AnySchema
+  compression?: string
+  power?: (strokes: IStroke, compression: Compression.compression) => any
+  throttle?: string[]
 }
 
-export interface IHandler {
-  response: IResponse
-  request: IRequest
-  definition: IDefinition
-  history: IHistory
-  config: IConfig
-  data?: any
-}
-
-export interface IDefinition {
-  name: string
-  hql?: string
-  handler?: (context: IHandler) => any
-  identifiers?: IIdentifier[]
-  inboundSchema?: AnySchema
-  outboundSchema?: AnySchema
-  access: string[]
-}
-
-export interface IHistory {
+export interface IOdometer {
   [key: string]: any
 }
 
-export interface IUser {
+export interface IRider {
   id: number | string
-  access: string[]
+  keys: string[]
 }
 
 export interface IHTTPRequest {
-  user?: IUser
-  body?: { requests: IRequest[] }
+  rider: IRider
+  body: { requests: IRequest[] }
 }
 
 export interface IHTTPResponse {
@@ -54,29 +46,23 @@ export interface IHTTPResponse {
 }
 
 export interface IRequest {
-  id?: string
-  name: string
-  properties?: any
-  async?: boolean
+  serial?: string
+  model: string
+  intake?: unknown
+  timing?: boolean
 }
-
 
 export interface IResponse {
   requests: any[]
 }
 
-export interface IError {
-  details?: string
-  error: { errno: number, code: string }
+export interface IRequestModel {
+  serial?: string
+  model?: string
 }
 
-export interface IRequestName {
-  id?: string
-  name?: string
-}
-
-export interface IHelper { 
+export interface ITool { 
   prefix: string
-  functions: Record<string, (...args: any[]) => any >
+  tools: Record<string, (...args: any[]) => any>
   context?: boolean
 }

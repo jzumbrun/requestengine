@@ -1,7 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const globals_1 = require("@jest/globals");
-const _1 = require(".");
+import { describe, it, expect } from '@jest/globals';
+import { kickStart } from '../index.js';
 const queryStatement = (compression, data) => {
     return new Promise((resolve) => {
         const number = parseInt(compression);
@@ -15,7 +13,7 @@ const queryStatement = (compression, data) => {
     });
 };
 function start(engines) {
-    return (0, _1.kickStart)({
+    return kickStart({
         tools: [{ tools: {
                     trim: (str) => str.trim(),
                     eq: (a, b) => a === b,
@@ -26,14 +24,14 @@ function start(engines) {
         engines
     });
 }
-(0, globals_1.describe)('RequestEngine', () => {
-    (0, globals_1.describe)('middleware', () => {
+describe('RequestEngine', () => {
+    describe('middleware', () => {
         const res = {
             send: (response) => {
                 res.data = response;
             }
         };
-        (0, globals_1.it)('$riders.update', done => {
+        it('$riders.update', done => {
             start([{
                     model: '$riders.update',
                     compression: 'UPDATE riders SET {{rider}} WHERE id={{$rider.id}}',
@@ -57,14 +55,14 @@ function start(engines) {
                 }
             }, res)
                 .then(() => {
-                (0, globals_1.expect)(res.data.requests[0].results).toEqual(['UPDATE riders SET $1 = $2, $3 = $4', ['name', 'Jon', 'age', 33]]);
+                expect(res.data.requests[0].results).toEqual(['UPDATE riders SET $1 = $2, $3 = $4', ['name', 'Jon', 'age', 33]]);
                 done();
             })
                 .catch(error => {
                 done(error);
             });
         });
-        (0, globals_1.it)('sync', done => {
+        it('sync', done => {
             start([
                 {
                     model: 'immediate',
@@ -116,7 +114,7 @@ function start(engines) {
                 }
             }, res)
                 .then(() => {
-                (0, globals_1.expect)(res.data.requests).toEqual([
+                expect(res.data.requests).toEqual([
                     { id: '1', model: 'long', results: '200' },
                     { id: '4', model: 'immediate', results: '0' },
                     { id: '3', model: 'short', results: '100' },
@@ -128,7 +126,7 @@ function start(engines) {
                 done(error);
             });
         });
-        (0, globals_1.it)('previous query results', done => {
+        it('previous query results', done => {
             start([
                 {
                     model: 'thing.one',
@@ -163,7 +161,7 @@ function start(engines) {
                 }
             }, res)
                 .then(() => {
-                (0, globals_1.expect)(res.data.requests).toEqual([
+                expect(res.data.requests).toEqual([
                     {
                         id: 'one',
                         model: 'thing.one',
@@ -185,7 +183,7 @@ function start(engines) {
                 done(error);
             });
         });
-        (0, globals_1.it)('registered tools', done => {
+        it('registered tools', done => {
             start([
                 {
                     model: 'thing.one',
@@ -212,7 +210,7 @@ function start(engines) {
                 }
             }, res)
                 .then(() => {
-                (0, globals_1.expect)(res.data.requests).toEqual([
+                expect(res.data.requests).toEqual([
                     {
                         id: '1',
                         model: 'thing.one',
@@ -226,8 +224,8 @@ function start(engines) {
             });
         });
     });
-    (0, globals_1.describe)('run', () => {
-        (0, globals_1.it)('nested tools', done => {
+    describe('run', () => {
+        it('nested tools', done => {
             start([
                 {
                     model: 'nested',
@@ -262,7 +260,7 @@ function start(engines) {
                 keys: ['rider']
             })
                 .then(({ requests }) => {
-                (0, globals_1.expect)(requests).toEqual([
+                expect(requests).toEqual([
                     {
                         id: '1',
                         model: 'nested',
@@ -280,7 +278,7 @@ function start(engines) {
                 done(error);
             });
         });
-        (0, globals_1.it)('identfiers with alias', done => {
+        it('identfiers with alias', done => {
             start([
                 {
                     model: 'alias',
@@ -305,7 +303,7 @@ function start(engines) {
                 keys: ['rider']
             })
                 .then(({ requests }) => {
-                (0, globals_1.expect)(requests).toEqual([
+                expect(requests).toEqual([
                     {
                         model: 'alias',
                         results: [
@@ -320,7 +318,7 @@ function start(engines) {
                 done(error);
             });
         });
-        (0, globals_1.it)('identfiers', done => {
+        it('identfiers', done => {
             start([
                 {
                     model: 'alias',
@@ -346,7 +344,7 @@ function start(engines) {
                 keys: ['rider']
             })
                 .then(({ requests }) => {
-                (0, globals_1.expect)(requests).toEqual([
+                expect(requests).toEqual([
                     {
                         model: 'alias',
                         results: [
@@ -361,7 +359,7 @@ function start(engines) {
                 done(error);
             });
         });
-        (0, globals_1.it)('async power', done => {
+        it('async power', done => {
             start([
                 {
                     model: 'power',
@@ -384,7 +382,7 @@ function start(engines) {
                 keys: ['rider']
             })
                 .then(({ requests }) => {
-                (0, globals_1.expect)(requests).toEqual([{ model: 'power', results: 1 }]);
+                expect(requests).toEqual([{ model: 'power', results: 1 }]);
                 done();
             })
                 .catch(error => {

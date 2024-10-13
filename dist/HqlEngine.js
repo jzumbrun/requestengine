@@ -114,11 +114,11 @@ class HqlEngine {
   /**
      * Identifiers
      */
-  identifiers (definitionIdentifiers, value) {
-    if (!definitionIdentifiers) { return value }
+  identifiers (cycleIdentifiers, value) {
+    if (!cycleIdentifiers) { return value }
     const identifiers = []
     value = Array.isArray(value) ? value : [value]
-    definitionIdentifiers.forEach(({ name, alias }) => {
+    cycleIdentifiers.forEach(({ name, alias }) => {
       value.forEach((val) => {
         if (val === name || val === alias) { identifiers.push({ __identifier__: { name, alias } }) }
       })
@@ -127,48 +127,48 @@ class HqlEngine {
   }
 
   /**
-     * Register Helpers
+     * Register Tools
      */
-  registerHelpers (helpers = []) {
+  registerTools (tools = []) {
     var _a
     const $this = this
     const instance = $this.instance
-    helpers.push({
+    tools.push({
       prefix: ':',
       functions: {
         // Identifiers Select statements
         id: function (value, context) {
-          return $this.identifiers(context.data.root.$definition.identifiers, value)
+          return $this.identifiers(context.data.root.$cycle.identifiers, value)
         },
         ht: function (value) {
           return $this.HTMLEscapeExpression(value)
         }
       }
     })
-    for (const helper of helpers) {
+    for (const tool of tools) {
       // Set defaults
-      helper.functions = helper.functions || {}
-      helper.prefix = helper.prefix || ''
-      helper.context = (_a = helper === null || helper === void 0 ? void 0 : helper.context) !== null && _a !== void 0 ? _a : true
-      // Register a helper for every function
-      for (const funk in helper.functions) {
-        if (instance.Utils.isFunction(helper.functions[funk])) {
-          if (helper.context) {
+      tool.functions = tool.functions || {}
+      tool.prefix = tool.prefix || ''
+      tool.context = (_a = tool === null || tool === void 0 ? void 0 : tool.context) !== null && _a !== void 0 ? _a : true
+      // Register a tool for every function
+      for (const funk in tool.functions) {
+        if (instance.Utils.isFunction(tool.functions[funk])) {
+          if (tool.context) {
             // Native handlebars context use
-            instance.registerHelper(`${helper.prefix}${funk}`, helper.functions[funk])
+            instance.registerTool(`${tool.prefix}${funk}`, tool.functions[funk])
           } else {
             // Remove context from `this` and first arg
             // Useful for black box functions like lodash/underscore
-            instance.registerHelper(`${helper.prefix}${funk}`, function (...args) {
+            instance.registerTool(`${tool.prefix}${funk}`, function (...args) {
               // Take handlebar's context from the beginning
               const context = args.pop()
               // Are we dealing with a block?
               if (instance.Utils.isFunction(context.fn)) {
-                return helper.functions[funk](
+                return tool.functions[funk](
                   // @ts-ignore ts(2683)
                   context.fn(this), ...args)
               }
-              return helper.functions[funk](...args)
+              return tool.functions[funk](...args)
             })
           }
         }
