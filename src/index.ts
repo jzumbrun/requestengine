@@ -1,5 +1,6 @@
 import type { ITuning, IRider, 
-  IOdometer, IRequest, IResponse, IHTTPRequest, IHTTPResponse } from '../types.d.js'
+  IOdometer, IRequest, IResponse, IHTTPRequest, IHTTPResponse, 
+  IEngine} from '../types.d.js'
 import Cycle from './Cycle.js'
 import Start from './Start.js'
 import EngineError from './errors/EngineError.js'
@@ -54,18 +55,28 @@ export default class RequestEngine {
       // The catch was defined above in the creation of the promise
       if (timing.length) await Promise.all(timing)
     } catch (error: any) {
-      // Do we have any unknown issues?
-      const err = new EngineError(1007, 'ERROR_UNKNOWN')
-      if (this.tuning.env === 'production') response.requests.push(err)
-      else {
-        err.details = error.message
-        response.requests.push(err)
+      if(!(error instanceof EngineError)) {
+        // Do we have any unknown issues?
+        const err = new EngineError(1007, 'ERROR_UNKNOWN')
+        if (this.tuning.env === 'production') response.requests.push(err)
+        else {
+          err.details = error.message
+          response.requests.push(err)
+        }
       }
+      
     } finally {
       if (typeof this.tuning.neutral === 'function') this.tuning.neutral(response)
     }
 
     return response
+  }
+
+  /**
+   * Get Engine Schemas
+   */
+  public getEngineSchemas(): Pick<IEngine, "model" | "intake" | "exhaust" >[] {
+    return this.tuning.engines.map(engine => ({ model: engine.model, intake: engine.intake, exhaust: engine.exhaust }))
   }
 }
 

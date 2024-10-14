@@ -2,6 +2,7 @@ import { Ajv } from 'ajv'
 import ajvKeywords from 'ajv-keywords'
 import { getRequestEngine } from './toolBox.js'
 import Cycle from './Cycle.js'
+import EngineError from './errors/EngineError.js'
 
 /**
  * Intake
@@ -22,9 +23,9 @@ export default class Intake {
     if (!this.cycle.engine.model) {
       this.cycle.response.requests.push({
         ...getRequestEngine(this.cycle.request),
-        error: { errno: 2000, code: 'ERROR_REQUEST_NOT_FOUND' }
+        error: { errno: 2000, code: 'ERROR_REQUEST_ENGINE_MODEL_NOT_FOUND' }
       })
-      throw new Error('ERROR_REQUEST_NOT_FOUND')
+      throw new EngineError(2000, 'ERROR_REQUEST_ENGINE_MODEL_NOT_FOUND')
     }
 
     // Do we have the correct keys for the ignition?
@@ -33,7 +34,7 @@ export default class Intake {
         ...getRequestEngine(this.cycle.request),
         error: { errno: 2001, code: 'ERROR_REQUEST_WRONG_KEYS' }
       })
-      throw new Error('ERROR_REQUEST_WRONG_KEYS')
+      throw new EngineError(2001, 'ERROR_REQUEST_WRONG_KEYS')
     }
 
     if (!this.avj.validate(this.cycle.engine.intake, this.cycle.request.fuel || null)) {
@@ -45,7 +46,7 @@ export default class Intake {
           details: this.avj.errors
         }
       })
-      throw new Error('ERROR_REQUEST_INTAKE_VALIDATION')
+      throw new EngineError(2003, 'ERROR_REQUEST_INTAKE_VALIDATION')
     }
   }
 

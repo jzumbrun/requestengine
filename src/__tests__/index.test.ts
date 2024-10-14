@@ -368,5 +368,155 @@ describe('RequestEngine', () => {
         done(error)
       })
     })
+
+    it('tuning drive errors', done => {
+      try {
+        kickStart({
+          drive: 'wrong',
+          engines: []
+        } as any)
+      } catch(error) {
+        expect((error as any).message).toEqual('ERROR_REQUEST_ENGINE_VALIDATION')
+        done()
+      }
+    })
+
+    it('tuning engine errors', done => {
+      try {
+        kickStart({
+          drive: () => {},
+          engines: [{
+            model: 'thing.one',
+            compression: 'thing.one {{_trim intake.trimspace}}',
+            power: () => {},
+            intake: { type: 'object', properties: { trimspace: { type: 'string'} } },
+            exhaust: { type: 'array' },
+            ignition: ['rider']
+          }]
+        } as any)
+      } catch(error) {
+        expect((error as any).message).toEqual('ERROR_REQUEST_ENGINE_ENGINES_VALIDATION')
+        done()
+      }
+    })
+
+    it('request intake errors', done => {
+      start([
+        {
+          model: 'wrong.intake',
+          intake: { type: 'string' },
+          exhaust: { type: 'string' },
+          compression: 'test',
+          ignition: ['rider']
+        }
+      ]).run([
+        {
+          engine: 'wrong.intake',
+          fuel: { firstName: 'Abe'}
+        },
+        {
+          engine: 'wrong.intake',
+          fuel: { firstName: 'Gabe'}
+        }
+      ], {
+            license: 123,
+            keys: ['rider']
+          },
+      )
+      .then(({ requests }) => {
+        expect(requests.length).toEqual(1)
+        expect(requests[0].error.code).toEqual('ERROR_REQUEST_INTAKE_VALIDATION')
+        done()
+      })
+      .catch(error => {
+        done(error)
+      })
+    })
+
+    it('request wrong keys errors', done => {
+      start([
+        {
+          model: 'wrong.keys',
+          intake: { type: 'object' },
+          exhaust: { type: 'array' },
+          compression: 'test',
+          ignition: ['rider']
+        }
+      ]).run([
+        {
+          engine: 'wrong.keys',
+          fuel: { firstName: 'Abe'}
+        }
+      ], {
+            license: 123,
+            keys: ['nothing']
+          },
+      )
+      .then(({ requests }) => {
+        expect(requests.length).toEqual(1)
+        expect(requests[0].error.code).toEqual('ERROR_REQUEST_WRONG_KEYS')
+        done()
+      })
+      .catch(error => {
+        done(error)
+      })
+    })
+
+    it('request wrong engine model errors', done => {
+      start([
+        {
+          model: 'wrong.engine',
+          intake: { type: 'object' },
+          exhaust: { type: 'array' },
+          compression: 'test',
+          ignition: ['rider']
+        }
+      ]).run([
+        {
+          engine: 'wrong.wrong',
+          fuel: { firstName: 'Abe'}
+        }
+      ], {
+            license: 123,
+            keys: ['rider']
+          },
+      )
+      .then(({ requests }) => {
+        expect(requests.length).toEqual(1)
+        expect(requests[0].error.code).toEqual('ERROR_REQUEST_ENGINE_MODEL_NOT_FOUND')
+        done()
+      })
+      .catch(error => {
+        done(error)
+      })
+    })
+  })
+  describe('getEngineSchemas', () => {
+    it('should return the correct engine schemas', () => {
+      const engines = [
+        {
+          model: 'engine1',
+          intake: { type: 'object', properties: { field1: { type: 'string' } } },
+          exhaust: { type: 'array' },
+          compression: 'test1',
+          ignition: ['rider']
+        },
+        {
+          model: 'engine2',
+          intake: { type: 'object', properties: { field2: { type: 'number' } } },
+          exhaust: { type: 'array' },
+          compression: 'test2',
+          ignition: ['rider']
+        }
+      ]
+
+      const engine = start(engines)
+      const schemas = engine.getEngineSchemas()
+
+      expect(schemas).toEqual([
+        { model: 'engine1', intake: engines[0].intake, exhaust: engines[0].exhaust },
+        { model: 'engine2', intake: engines[1].intake, exhaust: engines[1].exhaust }
+      ])
+    })
   })
 })
