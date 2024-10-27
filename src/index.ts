@@ -1,28 +1,28 @@
-import type { ITuning, IRider, 
+import type { IRider, 
   IOdometer, IRequest, IResponse, IHTTPRequest, IHTTPResponse, 
-  IEngine} from '../types.d.js'
-import Cycle from './Cycle.js'
+  IEngineModel, IResult,
+  IGarage, IGear} from '../types.d.js'
+import Engine from './Engine.js'
 import Start from './Start.js'
-import EngineError from './errors/EngineError.js'
 
 export type * from '../types.d.ts'
 
 export default class RequestEngine {
-  readonly tuning: ITuning
+  readonly garage: IGarage
+  readonly gear: IGear
 
-  constructor (tuning: ITuning) {
-    tuning.engines = tuning.engines
-    tuning.env = process.env.NODE_ENV || 'production'
-    tuning.neutral = tuning.neutral || undefined
-    tuning.drive = tuning.drive
-    this.tuning = tuning
+  constructor (garage: IGarage, gear: IGear) {
+    garage.env = process.env.NODE_ENV || 'production'
+    gear.neutral = gear.neutral || undefined
+    this.garage = garage
+    this.gear = gear
   }
 
   /**
    * Start
    */
   public start (): void {
-    const start = new Start(this.tuning)
+    const start = new Start(this.garage, this.gear)
     start.turnOver()
   }
 
@@ -42,31 +42,24 @@ export default class RequestEngine {
   public async run (requests: IRequest[], rider: IRider): Promise<IResponse> {
 
     const response: IResponse = { requests: [] }
-    const timing: Promise<void>[] = []
+    const timing: Promise<IResult>[] = []
     const odometer: IOdometer = {}
 
     try {
       for await (const request of requests) {
-        const strokes = new Cycle(request, response, odometer, timing, rider, this.tuning)
-        await strokes.stroke()
+        const engine = new Engine(request, rider, this.garage, this.gear, odometer)
+        if (request.timing === false) timing.push(engine.cycle())
+        else response.requests.push(await engine.cycle())
       }
 
       // Process all of the async queries here
       // The catch was defined above in the creation of the promise
-      if (timing.length) await Promise.all(timing)
+      if (timing.length) response.requests.push(...await Promise.all(timing))
     } catch (error: any) {
-      if(!(error instanceof EngineError)) {
-        // Do we have any unknown issues?
-        const err = new EngineError(1007, 'ERROR_UNKNOWN')
-        if (this.tuning.env === 'production') response.requests.push(err)
-        else {
-          err.details = error.message
-          response.requests.push(err)
-        }
-      }
-      
+      error.details = error.details || error.message
+      response.requests.push({ error })
     } finally {
-      if (typeof this.tuning.neutral === 'function') this.tuning.neutral(response)
+      if (typeof this.gear.neutral === 'function') this.gear.neutral(response)
     }
 
     return response
@@ -75,16 +68,16 @@ export default class RequestEngine {
   /**
    * Get Engine Schemas
    */
-  public getEngineSchemas(): Pick<IEngine, "model" | "intake" | "exhaust" >[] {
-    return this.tuning.engines.map(engine => ({ model: engine.model, intake: engine.intake, exhaust: engine.exhaust }))
+  public getEngineSchemas(): Pick<IEngineModel, "model" | "intake" | "exhaust" >[] {
+    return this.garage.engines.map(engine => ({ model: engine.model, intake: engine.intake, exhaust: engine.exhaust }))
   }
 }
 
 /**
  * Start
  */
-export function kickStart (tuning: ITuning): RequestEngine {
-  const engine = new RequestEngine(tuning)
+export function kickStart (garage: IGarage, gear: IGear): RequestEngine {
+  const engine = new RequestEngine(garage, gear)
   engine.start()
   return engine
 }

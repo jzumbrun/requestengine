@@ -1,5 +1,5 @@
-import type { IEngine, ITool } from '../types.d.js'
-import Cycle from './Cycle.js'
+import type { IEngineModel, ITool } from '../types.d.js'
+import Engine from './Engine.js'
 // Import necessary modules
 import Handlebars, { Utils } from 'handlebars'
 
@@ -7,38 +7,44 @@ interface IIdentifierParameter {
   __identifier__: { name: string, alias: string }
 }
 
+interface ICompressionData {
+  intake: unknown
+  rider: unknown
+  odometer: unknown
+  model: IEngineModel
+}
+
 /**
  * Compression
  */
 export default class Compression {
-  private cycle: Cycle
+  private engine: Engine
   private handlebars: typeof Handlebars 
   private HTMLEscapeExpression: typeof Utils.escapeExpression
   private params: unknown[]
 
-  constructor(cycle: Cycle) {
-    this.cycle = cycle
+  constructor(engine: Engine) {
+    this.engine = engine
     this.handlebars = Handlebars.create()
     this.HTMLEscapeExpression = this.handlebars.Utils.escapeExpression
     this.params = []
-    
   }
 
   public stroke (): Promise<unknown> {
-    const data = {
-      intake: this.cycle.request.fuel,
-      rider: this.cycle.rider,
-      odometer: this.cycle.odometer,
-      engines: this.cycle.engine
+    const data: ICompressionData = {
+      intake: this.engine.request.fuel,
+      rider: this.engine.rider,
+      odometer: this.engine.odometer,
+      model: this.engine.model
     }
-    this.registerTools(this.cycle.tuning.tools)
-    const compiled = this.compile(this.cycle.engine.compression!, data)
-    return this.cycle.tuning.drive!(compiled, this.getParams())
+    this.registerTools(this.engine.garage.tools)
+    const compiled = this.compile(this.engine.model.compression!, data)
+    return this.engine.gear.drive!(compiled, this.getParams())
   }
 
-  static compression (query: string, cycle: Cycle): Promise<unknown> {
-    cycle.engine.compression = query
-    const compression = new Compression(cycle)
+  public static compressionStroke (query: string, engine: Engine): Promise<unknown> {
+    engine.model.compression = query
+    const compression = new Compression(engine)
     return compression.stroke()
   }
 
@@ -54,7 +60,7 @@ export default class Compression {
    * Compile
    * Allows us to override the escape expression just for this compile call.
    */
-  public compile(statement: string, data: object): string {
+  private compile(statement: string, data: ICompressionData): string {
     this.params = []
     this.registerEscapeExpression()
     const compiled = this.handlebars.compile(statement)(data)
@@ -140,12 +146,12 @@ export default class Compression {
   /**
    * Throttle To Identifiers
    */
-  public throttleToIdentifiers(enginesThrottle: IEngine['throttle'], value: unknown): unknown {
-    if(!enginesThrottle) return value
+  private throttleToIdentifiers(engineModelThrottle: IEngineModel['throttle'], value: unknown): unknown {
+    if(!engineModelThrottle) return value
 
     let identifiers: IIdentifierParameter[] = []
     value = Array.isArray(value) ? value : [value]
-    enginesThrottle.forEach((throttle: string) => {
+    engineModelThrottle.forEach((throttle: string) => {
       const [name, alias] = throttle.split(' as ') as [string, string]
       (value as unknown[]).forEach((val: unknown) => {
         if (val === name || val === alias) identifiers.push({ __identifier__: { name, alias } })
@@ -157,15 +163,15 @@ export default class Compression {
   /**
    * Register Tools
    */
-  public registerTools(tools: ITool[] = []): void {
+  private registerTools(tools: ITool[] = []): void {
     const $this = this
     const handlebars = $this.handlebars
     tools.push({
       prefix: ':',
       tools: {
         // Identifiers Select statements
-        throttle: function (value: unknown, context: { data: { root: { engines: IEngine } } }) {
-          return $this.throttleToIdentifiers(context.data.root.engines.throttle, value)
+        throttle: function (value: unknown, context: { data: { root: { model: IEngineModel } } }) {
+          return $this.throttleToIdentifiers(context.data.root.model.throttle, value)
         }
       },
     })

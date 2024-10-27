@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals'
-import  { IEngine, kickStart } from '../index.js'
+import  { IEngineModel, kickStart } from '../index.js'
 
 const queryStatement = (compression: string, data: unknown) => {
   return new Promise((resolve) => {
@@ -12,16 +12,17 @@ const queryStatement = (compression: string, data: unknown) => {
   })
 }
 
-function start(engines: IEngine[]) {
+function start(engines: IEngineModel[]) {
   return kickStart({
+    engines,
     tools: [{ tools: {
       trim: (str: string) => str.trim(),
       eq: (a: string, b: string) => a === b,
       isString: (str: string) => typeof str === 'string'
-    }, prefix: '_', context: false }],
-    neutral: () => null,
-    drive: queryStatement,
-    engines
+    }, prefix: '_', context: false }]
+    }, {
+      neutral: () => null,
+      drive: queryStatement
   })
 }
 
@@ -129,10 +130,10 @@ describe('RequestEngine', () => {
         )
         .then(() => {
           expect(res.data.requests).toEqual([
-            { serial: '1', engine: 'long', results: '200' },
-            { serial: '4', engine: 'immediate', results: '0' },
-            { serial: '3', engine: 'short', results: '100' },
-            { serial: '2', engine: 'long', results: '200' }
+            {"engine": "long", "results": "200", "serial": "1"},
+            {"engine": "immediate", "results": "0", "serial": "4"}, 
+            {"engine": "long", "results": "200", "serial": "2"},
+            {"engine": "short", "results": "100", "serial": "3"}
           ])
           done()
         })
@@ -343,7 +344,7 @@ describe('RequestEngine', () => {
           model: 'power',
           intake: { type: 'null' },
           exhaust: { type: 'number' },
-          power: (data: any) => {
+          power: () => {
             return new Promise((resolve) => {
               setTimeout(() => { resolve(1) }, 0)
             })
@@ -369,22 +370,103 @@ describe('RequestEngine', () => {
       })
     })
 
-    it('tuning drive errors', done => {
+    it('async power call compressionStroke', done => {
+      start([
+        {
+          model: 'power',
+          intake: { type: 'null' },
+          exhaust: { type: 'array' },
+          power: async (engine, { compressionStroke }) => {
+            const result = await compressionStroke('callCompression', engine)
+            return result
+          },
+          ignition: ['rider']
+        }
+      ])
+        .run([
+          {
+            engine: 'power'
+          }
+        ], {
+          license: 123,
+          keys: ['rider']
+        }
+      )
+      .then(({ requests }) => {
+        
+        expect(requests).toEqual([{ engine: 'power', results: ['callCompression', []] } ])
+        done()
+      })
+      .catch(error => {
+        done(error)
+      })
+    })
+
+    it('async power call engineCycle', done => {
+      start([
+        {
+          model: 'another.engine',
+          intake: { type: 'null' },
+          exhaust: { type: 'array' },
+          compression: 'another.engine.compression',
+          ignition: ['system']
+        },
+        {
+          model: 'power',
+          intake: { type: 'null' },
+          exhaust: { type: 'array' },
+          power: async (engine, { engineCycle }) => {
+            const result = await engineCycle(
+              { engine: 'another.engine' },
+              { license: 'system', keys: ['system'] },
+              engine.garage,
+              engine.gear
+            )
+            return result.results
+          },
+          ignition: ['rider']
+        }
+      ])
+        .run([
+          {
+            engine: 'power'
+          }
+        ], {
+          license: 123,
+          keys: ['rider']
+        }
+      )
+      .then(({ requests }) => {
+        
+        expect(requests).toEqual([{ engine: 'power', results: ['another.engine.compression', []] } ])
+        done()
+      })
+      .catch(error => {
+        done(error)
+      })
+    })
+
+    it('gear engines errors', done => {
       try {
-        kickStart({
-          drive: 'wrong',
-          engines: []
-        } as any)
+        kickStart({ engines: false } as any, { drive: 'wrong' } as any)
       } catch(error) {
-        expect((error as any).message).toEqual('ERROR_REQUEST_ENGINE_VALIDATION')
+        expect((error as any).message).toEqual('ERROR_REQUEST_ENGINE_GARAGE_VALIDATION')
         done()
       }
     })
 
-    it('tuning engine errors', done => {
+    it('gear drive errors', done => {
+      try {
+        kickStart({ engines: [] }, { drive: 'wrong' } as any)
+      } catch(error) {
+        expect((error as any).message).toEqual('ERROR_REQUEST_ENGINE_GEAR_VALIDATION')
+        done()
+      }
+    })
+
+    it('garage engine errors', done => {
       try {
         kickStart({
-          drive: () => {},
           engines: [{
             model: 'thing.one',
             compression: 'thing.one {{_trim intake.trimspace}}',
@@ -393,7 +475,7 @@ describe('RequestEngine', () => {
             exhaust: { type: 'array' },
             ignition: ['rider']
           }]
-        } as any)
+        } as any, { drive: () => {} } as any)
       } catch(error) {
         expect((error as any).message).toEqual('ERROR_REQUEST_ENGINE_ENGINES_VALIDATION')
         done()
@@ -491,6 +573,7 @@ describe('RequestEngine', () => {
       })
     })
   })
+
   describe('getEngineSchemas', () => {
     it('should return the correct engine schemas', () => {
       const engines = [

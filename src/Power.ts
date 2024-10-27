@@ -1,23 +1,25 @@
-import Cycle from './Cycle.js'
+import Engine from './Engine.js'
 import Compression from './Compression.js'
 
 /**
  * Power
  */
 export default class Power {
-  private cycle: Cycle
+  private engine: Engine
 
-  constructor(cycle: Cycle) {
-    this.cycle = cycle
+  constructor(engine: Engine) {
+    this.engine = engine
   }
 
   public stroke (): Promise<unknown> {
-    if (this.cycle.engine.power) {
-      return this.cycle.engine.power(this.cycle, Compression.compression);
+    if (this.engine.model.power) {
+      return this.engine.model.power(this.engine, {
+        compressionStroke: Compression.compressionStroke,
+        engineCycle: Engine.engineCycle
+      });
     } else {
       return Promise.resolve();
     }
   }
-
   
 }

@@ -49,21 +49,14 @@ const requests = [{
     fuel: { tag: 'groceries'}
 }]
 
-const requestengine = initRequestEngine({
-    engines,
-    drive: q => pg.query(q)
-})
+const requestengine = kickStart({ engines }, { drive: q => pg.query(q) })   
 requestengine.run({ rider, requests })
 ```
 
 A middleware for express is also provided with a query callback to a live database connection:
 
 ```
-const requestengine = initRequestEngine({
-    engines,
-    drive: q => pg.query(q)
-})
-
+const requestengine = kickStart({ engines }, { drive: q => pg.query(q) })   
 app.post('/requests', requestengine.middleware())
 ```
 
@@ -72,15 +65,15 @@ app.post('/requests', requestengine.middleware())
 Each engine is given a model, an compression statement, a keys list, and an intake schema.
 
 - model!: string; Model should reflect the resource and action, like "notes.update". This is only a convention. But it must be unique.   
-- compression?: string; The `compression` property is a simple SQL statement managed by handlebars. Handlebars will take care of sql injections using postgres parameterization. Any value within {{}} will be evaluated, and postgres escaped by handlebars. Available handlebar helper functions need to be supplied to `initRequestEngine()` function.   
+- compression?: string; The `compression` property is a simple SQL statement managed by handlebars. Handlebars will take care of sql injections using postgres parameterization. Any value within {{}} will be evaluated, and postgres escaped by handlebars. Available handlebar helper functions need to be supplied to `kickStart()` function.   
 The following are properties provided to the compression string:
 
     - odometer: All successfull request responses within a client request will be available to subseqent requests in the `odometer` object, if the serial property is set.
     - rider: The values for `rider.license` and `rider.keys` will be available to authenticate against database user identifiers.
     - intake: All request's `fuel` values will be available within the `intake` property.
 
-All requests are run synchronous by default in the order provided. Setting the `timing` property to true, will allow for asynchronous calls, but the odometer timeline cannot be guaranteed.
-- power?: (strokes: IStroke, compression: Compression.compression) => any; The `power` handler is optional and cannot be combined with the compression property. It is a handling function that allows for more flexible control over the request if more complex logic is needed that the compression statement alone, cannot provide. The `power` handler passes a compression function to allow code to make query calls along with all other data in the request pipeline.
+All requests are run synchronous by default in the order provided. Setting the `timing` property to false, will allow for asynchronous calls, but the odometer timeline cannot be guaranteed. Since synchronous requests can depend on previous request results, if any synchronous requests fail, any subsequent synchronous will not be called. Asynchronous requests will always run reguardless of previous failures.
+- power?: (engine: Engine, { compressionStroke, engineCycle }: IPowerSystems ) => any; The `power` handler is optional and cannot be combined with the compression property. It is a handling function that allows for more flexible control over the request if more complex logic is needed that the compression statement alone, cannot provide. The `power` handler passes a compressionStroke function to allow code to make query calls along with all other data in the request pipeline. It also passes a engineCycle function to allow code to make an entirely new call to another engine.
 - ignition!: string[]; The `ignition` property array is a list for authorized keys for each engine model.   
 - intake!: AnySchema; The `intake` property is an avj json schema that validates inbound data.   
 - exhaust!: AnySchema; The `exhaust` property is an avj json schema that validates outbound data.

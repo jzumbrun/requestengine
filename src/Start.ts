@@ -1,53 +1,69 @@
 import { Ajv } from 'ajv'
 import ajvKeywords from 'ajv-keywords'
-import { ITuning, IEngine } from '../types.d.js'
+import { IGarage, IGear, IEngineModel } from '../types.d.js'
 import EngineError from './errors/EngineError.js'
 
 /**
  * Start
  */
 export default class Start {
-  private tuning: ITuning
+  private garage: IGarage
+  private gear: IGear
   private avj: Ajv
 
-  constructor(tuning: ITuning) {
-    this.tuning = tuning
+  constructor(garage: IGarage, gear: IGear) {
+    this.garage = garage
+    this.gear = gear
     this.avj = new Ajv({ useDefaults: true, removeAdditional: 'all' })
     ajvKeywords.default(this.avj)
   }
 
-  turnOver(): never | void {
+  public turnOver(): never | void {
 
-    if (!this.checkTuning()) {
-      throw new EngineError(1000, 'ERROR_REQUEST_ENGINE_VALIDATION', this.avj.errors)
+    if (!this.checkGarage()) {
+      throw new EngineError(1000, 'ERROR_REQUEST_ENGINE_GARAGE_VALIDATION', this.avj.errors)
     }
 
-    for(const engine of this.tuning.engines!) {
+    if (!this.checkGear()) {
+      throw new EngineError(1000, 'ERROR_REQUEST_ENGINE_GEAR_VALIDATION', this.avj.errors)
+    }
+
+    for(const engine of this.garage.engines!) {
       if (!this.checkEngines(engine)) {
         throw new EngineError(1001, 'ERROR_REQUEST_ENGINE_ENGINES_VALIDATION', this.avj.errors)
       }
     }
   }
 
-  checkTuning() {
+  private checkGarage() {
     return this.avj.validate({
       type: 'object',
       properties: {
         engines: { type: 'array' },
         env: { type: 'string' },
-        tools: { type: 'array' },
+        tools: { type: 'array' }
+      },
+      required: ['engines'],
+      additionalProperties: false
+    }, this.garage)
+  }
+
+  private checkGear() {
+    return this.avj.validate({
+      type: 'object',
+      properties: {
         neutral: { typeof: 'function' },
         drive: { typeof: 'function' }
       },
-      required: ['engines', 'drive'],
+      required: ['drive'],
       additionalProperties: false
-    }, this.tuning)
+    }, this.gear)
   }
 
   /**
    * Check Engines
    */
-  checkEngines (engine: IEngine): boolean {
+  private checkEngines (engine: IEngineModel): boolean {
     return this.avj.validate(
       {
         type: 'object',
