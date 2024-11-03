@@ -37,7 +37,7 @@ export default class Engine {
     return engine.cycle()
   }
 
-  public async cycle(): Promise<IResult> {
+  private async cycle(): Promise<IResult> {
     const intake = new Intake(this)
     intake.stroke()
 

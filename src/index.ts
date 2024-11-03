@@ -47,9 +47,10 @@ export default class RequestEngine {
 
     try {
       for await (const request of requests) {
-        const engine = new Engine(request, rider, this.garage, this.gear, odometer)
-        if (request.timing === false) timing.push(engine.cycle())
-        else response.requests.push(await engine.cycle())
+        const engineCyle = Engine.engineCycle(request, rider, this.garage, this.gear, odometer)
+ 
+        if (request.timing === false) timing.push(engineCyle)
+        else response.requests.push(await engineCyle)
       }
 
       // Process all of the async queries here

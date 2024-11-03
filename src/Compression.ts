@@ -30,7 +30,7 @@ export default class Compression {
     this.params = []
   }
 
-  public stroke (): Promise<unknown> {
+  public stroke<T extends Record<string, any>[]> (): Promise<T> {
     const data: ICompressionData = {
       intake: this.engine.request.fuel,
       rider: this.engine.rider,
@@ -42,10 +42,10 @@ export default class Compression {
     return this.engine.gear.drive!(compiled, this.getParams())
   }
 
-  public static compressionStroke (query: string, engine: Engine): Promise<unknown> {
+  public static compressionStroke<T extends Record<string, any>[]> (query: string, engine: Engine): Promise<T> {
     engine.model.compression = query
     const compression = new Compression(engine)
-    return compression.stroke()
+    return compression.stroke<T>() 
   }
 
   private getParams(): unknown[] {

@@ -1,6 +1,6 @@
 {
   "name": "@elseblock/requestengine",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "PostgreSQL paralell request api, using plain SQL parameterized statements built by handlebar templates, validated by json schema.",
   "main": "./dist/index.js",
   "type": "module",
