@@ -1,4 +1,4 @@
-import type { IEngineModel, ITool } from '../types.d.js'
+import type { IEngineModel, IToolBox } from '../types.d.js'
 import Engine from './Engine.js'
 // Import necessary modules
 import Handlebars, { Utils } from 'handlebars'
@@ -8,10 +8,10 @@ interface IIdentifierParameter {
 }
 
 interface ICompressionData {
-  intake: unknown
-  rider: unknown
-  odometer: unknown
-  model: IEngineModel
+  $intake: unknown
+  $rider: unknown
+  $odometer: unknown
+  $model: IEngineModel
 }
 
 /**
@@ -30,19 +30,19 @@ export default class Compression {
     this.params = []
   }
 
-  public stroke<T extends Record<string, any>[]> (): Promise<T> {
+  public stroke<T> (): Promise<T> {
     const data: ICompressionData = {
-      intake: this.engine.request.fuel,
-      rider: this.engine.rider,
-      odometer: this.engine.odometer,
-      model: this.engine.model
+      $intake: this.engine.request.fuel,
+      $rider: this.engine.rider,
+      $odometer: this.engine.odometer,
+      $model: this.engine.model
     }
-    this.registerTools(this.engine.garage.tools)
+    this.registerToolBox(this.engine.garage.toolbox)
     const compiled = this.compile(this.engine.model.compression!, data)
     return this.engine.gear.drive!(compiled, this.getParams())
   }
 
-  public static compressionStroke<T extends Record<string, any>[]> (query: string, engine: Engine): Promise<T> {
+  public static compressionStroke<T> (query: string, engine: Engine): Promise<T> {
     engine.model.compression = query
     const compression = new Compression(engine)
     return compression.stroke<T>() 
@@ -163,50 +163,50 @@ export default class Compression {
   /**
    * Register Tools
    */
-  private registerTools(tools: ITool[] = []): void {
+  private registerToolBox(toolBox: IToolBox[] = []): void {
     const $this = this
     const handlebars = $this.handlebars
-    tools.push({
-      prefix: ':',
+    toolBox.push({
+      prefix: '$',
       tools: {
         // Identifiers Select statements
-        throttle: function (value: unknown, context: { data: { root: { model: IEngineModel } } }) {
-          return $this.throttleToIdentifiers(context.data.root.model.throttle, value)
+        throttle: function (value: unknown, context: { data: { root: { $model: IEngineModel } } }) {
+          return $this.throttleToIdentifiers(context.data.root.$model.throttle, value)
         }
       },
     })
 
-    for (const tool of tools) {
+    for (const drawer of toolBox) {
       // Set defaults
-      tool.tools = tool.tools || {}
-      tool.prefix = tool.prefix || ''
-      tool.context = tool?.context ?? true
+      drawer.tools = drawer.tools || {}
+      drawer.prefix = drawer.prefix || ''
+      drawer.context = drawer?.context ?? true
       // Register a tool for every function
-      for (const funk in tool.tools) {
-        if (handlebars.Utils.isFunction(tool.tools[funk])) {
-          if (tool.context) {
+      for (const funk in drawer.tools) {
+        if (handlebars.Utils.isFunction(drawer.tools[funk])) {
+          if (drawer.context) {
             // Native handlebars context use
             handlebars.registerHelper(
-              `${tool.prefix}${funk}`,
-              tool.tools[funk]
+              `${drawer.prefix}${funk}`,
+              drawer.tools[funk]
             )
           } else {
             // Remove context from `this` and first arg
             // Useful for black box tools like lodash/underscore
             handlebars.registerHelper(
-              `${tool.prefix}${funk}`,
+              `${drawer.prefix}${funk}`,
               function (...args: any[]) {
                 // Take handlebar's context from the beginning
                 const context = args.pop()
                 // Are we dealing with a block?
                 if (handlebars.Utils.isFunction(context.fn)) {
-                  return tool.tools[funk](
+                  return drawer.tools[funk](
                     // @ts-ignore ts(2683)
                     context.fn(this),
                     ...args
                   )
                 }
-                return tool.tools[funk](...args)
+                return drawer.tools[funk](...args)
               }
             )
           }

@@ -41,7 +41,23 @@ export default class Start {
       properties: {
         engines: { type: 'array' },
         env: { type: 'string' },
-        tools: { type: 'array' }
+        toolbox: { 
+          type: 'array',
+          items: {  
+            type: 'object', 
+            properties: { 
+              tools: { 
+                type: 'object',
+                patternProperties: { 
+                  '.*': { typeof: 'function' }
+                }
+              },
+              context: { type: 'boolean' },
+              prefix: { type: 'string' }
+            },
+            required: ['tools'],
+          }
+        }
       },
       required: ['engines'],
       additionalProperties: false

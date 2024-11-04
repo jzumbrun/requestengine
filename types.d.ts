@@ -7,7 +7,7 @@ import type { EngineError } from './src/errors/index.js'
 export interface IGarage {
   engines: IEngineModel[]
   env?: string
-  tools?: ITool[]
+  toolbox?: IToolBox[]
 }
 
 export interface IPowerSystems {
@@ -66,7 +66,7 @@ export interface IResult {
   error? : EngineError
 }
 
-export interface ITool { 
+export interface IToolBox { 
   prefix: string
   tools: Record<string, (...args: any[]) => any>
   context?: boolean

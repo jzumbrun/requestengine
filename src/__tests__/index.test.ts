@@ -15,11 +15,15 @@ const queryStatement = (compression: string, data: unknown) => {
 function start(engines: IEngineModel[]) {
   return kickStart({
     engines,
-    tools: [{ tools: {
-      trim: (str: string) => str.trim(),
-      eq: (a: string, b: string) => a === b,
-      isString: (str: string) => typeof str === 'string'
-    }, prefix: '_', context: false }]
+    toolbox: [
+      {
+        tools: {
+          trim: (str: string) => str.trim(),
+          eq: (a: string, b: string) => a === b,
+          isString: (str: string) => typeof str === 'string'
+        }, 
+        prefix: '_', context: false 
+      }]
     }, {
       neutral: () => null,
       drive: queryStatement
@@ -36,10 +40,10 @@ describe('RequestEngine', () => {
       }
     }
 
-    it('{riders.update}', done => {
+    it(':riders:update', done => {
       start([{
-          model: '{riders.update}',
-          compression: 'UPDATE riders SET {{intake.rider}} WHERE id = {{rider.license}}',
+          model: ':riders:update',
+          compression: 'UPDATE riders SET {{$intake.rider}} WHERE id = {{$rider.license}}',
           intake: { type: 'object', properties: { rider: { type: 'object' } } },
           exhaust: { type: 'array' },
           ignition: ['rider']
@@ -52,7 +56,7 @@ describe('RequestEngine', () => {
             body: {
               requests: [
                 {
-                  engine: '{riders.update}',
+                  engine: ':riders:update',
                   fuel: {
                     rider: { name: 'Jon', age: 33 }
                   }
@@ -145,15 +149,15 @@ describe('RequestEngine', () => {
     it('previous query results', done => {
       start([
         {
-          model: 'thing.one',
-          compression: 'thing.one',
+          model: 'thing:one',
+          compression: 'thing:one',
           intake: { type: 'null' },
           exhaust: { type: 'array' },
           ignition: ['rider']
         },
         {
-          model: 'thing.two',
-          compression: 'thing.two is bigger than {{odometer.one.[0]}}',
+          model: 'thing:two',
+          compression: 'thing:two is bigger than {{$odometer.one.[0]}}',
           intake: { type: 'null' },
           exhaust: { type: 'array' },
           ignition: ['rider']
@@ -168,11 +172,11 @@ describe('RequestEngine', () => {
               requests: [
                 {
                   serial: 'one',
-                  engine: 'thing.one'
+                  engine: 'thing:one'
                 },
                 {
                   serial: 'two',
-                  engine: 'thing.two'
+                  engine: 'thing:two'
                 }
               ]
             }
@@ -183,13 +187,13 @@ describe('RequestEngine', () => {
           expect(res.data.requests).toEqual([
             {
               serial: 'one',
-              engine: 'thing.one',
-              results: ['thing.one', []]
+              engine: 'thing:one',
+              results: ['thing:one', []]
             },
             {
               serial: 'two',
-              engine: 'thing.two',
-              results: ["thing.two is bigger than $1", ['thing.one']]
+              engine: 'thing:two',
+              results: ["thing:two is bigger than $1", ['thing:one']]
             }
           ])
           done()
@@ -202,8 +206,8 @@ describe('RequestEngine', () => {
     it('registered tools', done => {
       start([
         {
-          model: 'thing.one',
-          compression: 'thing.one {{_trim intake.trimspace}}',
+          model: 'thing:one',
+          compression: 'thing:one {{_trim $intake.trimspace}}',
           intake: { type: 'object', properties: { trimspace: { type: 'string'} } },
           exhaust: { type: 'array' },
           ignition: ['rider']
@@ -218,7 +222,7 @@ describe('RequestEngine', () => {
               requests: [
                 {
                   serial: '1',
-                  engine: 'thing.one',
+                  engine: 'thing:one',
                   fuel: {
                     trimspace: '  nospaces   '
                   }
@@ -232,8 +236,8 @@ describe('RequestEngine', () => {
           expect(res.data.requests).toEqual([
             {
               serial: '1',
-              engine: 'thing.one',
-              results: ["thing.one $1", ['nospaces']]
+              engine: 'thing:one',
+              results: ["thing:one $1", ['nospaces']]
             }
           ])
           done()
@@ -252,7 +256,7 @@ describe('RequestEngine', () => {
           compression: [
             'UPDATE riders SET ',
             '{{#_trim ', '}}',
-            '{{#each intake.fields}}',
+            '{{#each $intake.fields}}',
             "{{#unless (_eq @key 'id')}}",
             '{{@key}} = {{#if (_isString this)}}{{_trim this}}, {{else}}{{this}}, {{/if}}',
             '{{/unless}}',
@@ -305,7 +309,7 @@ describe('RequestEngine', () => {
             enum: ['firstName', 'lastName']
           } } } },
           exhaust: { type: 'array' },
-          compression: 'SELECT {{:throttle intake.select}} from riders where firstName = {{intake.firstName}}',
+          compression: 'SELECT {{$throttle $intake.select}} from riders where firstName = {{$intake.firstName}}',
           ignition: ['rider']
         }
       ]).run([
@@ -405,10 +409,10 @@ describe('RequestEngine', () => {
     it('async power call engineCycle', done => {
       start([
         {
-          model: 'another.engine',
+          model: 'another:engine',
           intake: { type: 'null' },
           exhaust: { type: 'array' },
-          compression: 'another.engine.compression',
+          compression: 'another:engine:compression',
           ignition: ['system']
         },
         {
@@ -417,7 +421,7 @@ describe('RequestEngine', () => {
           exhaust: { type: 'array' },
           power: async (engine, { engineCycle }) => {
             const result = await engineCycle(
-              { engine: 'another.engine' },
+              { engine: 'another:engine' },
               { license: 'system', keys: ['system'] },
               engine.garage,
               engine.gear
@@ -438,7 +442,7 @@ describe('RequestEngine', () => {
       )
       .then(({ requests }) => {
         
-        expect(requests).toEqual([{ engine: 'power', results: ['another.engine.compression', []] } ])
+        expect(requests).toEqual([{ engine: 'power', results: ['another:engine:compression', []] } ])
         done()
       })
       .catch(error => {
@@ -468,8 +472,8 @@ describe('RequestEngine', () => {
       try {
         kickStart({
           engines: [{
-            model: 'thing.one',
-            compression: 'thing.one {{_trim intake.trimspace}}',
+            model: 'thing:one',
+            compression: 'thing:one {{_trim intake.trimspace}}',
             power: () => {},
             intake: { type: 'object', properties: { trimspace: { type: 'string'} } },
             exhaust: { type: 'array' },
@@ -485,7 +489,7 @@ describe('RequestEngine', () => {
     it('request intake errors', done => {
       start([
         {
-          model: 'wrong.intake',
+          model: 'wrong:intake',
           intake: { type: 'string' },
           exhaust: { type: 'string' },
           compression: 'test',
@@ -493,11 +497,11 @@ describe('RequestEngine', () => {
         }
       ]).run([
         {
-          engine: 'wrong.intake',
+          engine: 'wrong:intake',
           fuel: { firstName: 'Abe'}
         },
         {
-          engine: 'wrong.intake',
+          engine: 'wrong:intake',
           fuel: { firstName: 'Gabe'}
         }
       ], {
@@ -518,7 +522,7 @@ describe('RequestEngine', () => {
     it('request wrong keys errors', done => {
       start([
         {
-          model: 'wrong.keys',
+          model: 'wrong:keys',
           intake: { type: 'object' },
           exhaust: { type: 'array' },
           compression: 'test',
@@ -526,7 +530,7 @@ describe('RequestEngine', () => {
         }
       ]).run([
         {
-          engine: 'wrong.keys',
+          engine: 'wrong:keys',
           fuel: { firstName: 'Abe'}
         }
       ], {
@@ -547,7 +551,7 @@ describe('RequestEngine', () => {
     it('request wrong engine model errors', done => {
       start([
         {
-          model: 'wrong.engine',
+          model: 'wrong:engine',
           intake: { type: 'object' },
           exhaust: { type: 'array' },
           compression: 'test',
@@ -555,7 +559,7 @@ describe('RequestEngine', () => {
         }
       ]).run([
         {
-          engine: 'wrong.wrong',
+          engine: 'wrong:wrong',
           fuel: { firstName: 'Abe'}
         }
       ], {
