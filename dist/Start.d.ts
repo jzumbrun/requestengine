@@ -1,15 +1,18 @@
-import { ITuning, IEngine } from '../types.d.js';
+import { IGarage, IGear } from '../types.d.js';
 /**
  * Start
  */
 export default class Start {
-    private tuning;
+    private garage;
+    private gear;
     private avj;
-    constructor(tuning: ITuning);
+    constructor(garage: IGarage, gear: IGear);
     turnOver(): never | void;
+    private checkGarage;
+    private checkGear;
     /**
-     * Check
+     * Check Engines
      */
-    check(engine: IEngine): boolean;
+    private checkEngines;
 }
 //# sourceMappingURL=Start.d.ts.map

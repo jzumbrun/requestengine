@@ -1,1 +1,1 @@
-{"version":3,"file":"Power.d.ts","sourceRoot":"","sources":["../src/Power.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,YAAY,CAAA;AAG9B;;GAEG;AACH,MAAM,CAAC,OAAO,OAAO,KAAK;IACxB,OAAO,CAAC,KAAK,CAAO;gBAER,KAAK,EAAE,KAAK;IAIjB,MAAM,IAAK,OAAO,CAAC,OAAO,CAAC;CASnC"}
+{"version":3,"file":"Power.d.ts","sourceRoot":"","sources":["../src/Power.ts"],"names":[],"mappings":"AAAA,OAAO,MAAM,MAAM,aAAa,CAAA;AAGhC;;GAEG;AACH,MAAM,CAAC,OAAO,OAAO,KAAK;IACxB,OAAO,CAAC,MAAM,CAAQ;gBAEV,MAAM,EAAE,MAAM;IAInB,MAAM,IAAK,OAAO,CAAC,OAAO,CAAC;CAWnC"}

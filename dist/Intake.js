@@ -1,39 +1,33 @@
 import { Ajv } from 'ajv';
 import ajvKeywords from 'ajv-keywords';
-import { getRequestModel } from './toolBox.js';
+import { getRequestEngine } from './toolChest.js';
+import RequestError from './errors/RequestError.js';
 /**
  * Intake
  */
 export default class Intake {
-    constructor(cycle) {
-        this.cycle = cycle;
+    constructor(engine) {
+        this.engine = engine;
         this.avj = new Ajv({ useDefaults: true, removeAdditional: 'all' });
         ajvKeywords.default(this.avj);
     }
     stroke() {
-        // Do we have a cycle?
-        if (!this.cycle.engine.model) {
-            this.cycle.response.requests.push(Object.assign(Object.assign({}, getRequestModel(this.cycle.request)), { error: { errno: 2000, code: 'ERROR_REQUEST_NOT_FOUND' } }));
-            throw new Error('ERROR_REQUEST_NOT_FOUND');
+        // Do we have a engine?
+        if (!this.engine.model.model) {
+            throw new RequestError(getRequestEngine(this.engine.request), 2000, 'ERROR_REQUEST_ENGINE_MODEL_NOT_FOUND');
         }
-        // Do we have keys?
-        if (!this.keysIntersects()) {
-            this.cycle.response.requests.push(Object.assign(Object.assign({}, getRequestModel(this.cycle.request)), { error: { errno: 2001, code: 'ERROR_REQUEST_NO_KEYS' } }));
-            throw new Error('ERROR_REQUEST_NO_KEYS');
+        // Do we have the correct keys for the ignition?
+        if (!this.ignitionKeysIntersects()) {
+            throw new RequestError(getRequestEngine(this.engine.request), 2001, 'ERROR_REQUEST_WRONG_KEYS');
         }
-        if (!this.avj.validate(this.cycle.engine.intake, this.cycle.request.properties)) {
-            this.cycle.response.requests.push(Object.assign(Object.assign({}, getRequestModel(this.cycle.request)), { error: {
-                    errno: 2003,
-                    code: 'ERROR_REQUEST_INTAKE_VALIDATION',
-                    details: this.avj.errors
-                } }));
-            throw new Error('ERROR_REQUEST_INTAKE_VALIDATION');
+        if (!this.avj.validate(this.engine.model.intake, this.engine.request.fuel || null)) {
+            throw new RequestError(getRequestEngine(this.engine.request), 2003, 'ERROR_REQUEST_INTAKE_VALIDATION', this.avj.errors);
         }
     }
-    keysIntersects() {
+    ignitionKeysIntersects() {
         var _a;
-        const setA = new Set(this.cycle.engine.keys);
-        return (((_a = this.cycle.rider) === null || _a === void 0 ? void 0 : _a.keys) || []).some(value => setA.has(value));
+        const setA = new Set(this.engine.model.ignition);
+        return (((_a = this.engine.rider) === null || _a === void 0 ? void 0 : _a.keys) || []).some(value => setA.has(value));
     }
     /**
      * Check
@@ -42,24 +36,24 @@ export default class Intake {
         return this.avj.validate({
             type: 'object',
             properties: {
-                id: {
+                serial: {
                     type: 'string',
                     default: ''
                 },
-                name: {
+                engine: {
                     type: 'string',
-                    default: 'ERROR_MISSING_NAME'
+                    default: 'ERROR_MISSING_MODEL'
                 },
-                properties: {
-                    type: 'object',
-                    default: {}
+                fuel: {
+                    type: ['number', 'integer', 'string', 'boolean', 'array', 'object', 'null']
                 },
-                async: {
+                timing: {
                     type: 'boolean',
                     default: false
                 }
             },
-            additionalProperties: false
-        }, this.cycle.request);
+            additionalProperties: false,
+            required: ['engine']
+        }, this.engine.request);
     }
 }

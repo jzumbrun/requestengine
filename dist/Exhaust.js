@@ -1,30 +1,25 @@
 import { Ajv } from 'ajv';
 import ajvKeywords from 'ajv-keywords';
-import { getRequestModel } from './toolBox.js';
+import { getRequestEngine } from './toolChest.js';
+import RequestError from './errors/RequestError.js';
 /**
  * Exhaust
  */
 export default class Exhaust {
-    constructor(cycle, data) {
+    constructor(engine, data) {
         this.avj = new Ajv({ useDefaults: true, removeAdditional: 'all' });
         ajvKeywords.default(this.avj);
-        this.cycle = cycle;
+        this.engine = engine;
         this.data = data;
     }
     stroke() {
         // Do we have proper exhaust schema
-        if (this.cycle.engine.exhaust && !this.avj.validate(this.cycle.engine.exhaust, this.data)) {
-            this.cycle.response.requests.push(Object.assign(Object.assign({}, getRequestModel(this.cycle.request)), { error: {
-                    errno: 1005,
-                    code: 'ERROR_REQUEST_OUTBOUND_VALIDATION',
-                    details: this.avj.errors
-                } }));
+        if (this.engine.model.exhaust && !this.avj.validate(this.engine.model.exhaust, this.data)) {
+            throw new RequestError(getRequestEngine(this.engine.request), 1005, 'ERROR_REQUEST_EXHAUST_VALIDATION', this.avj.errors);
         }
-        else {
-            if (this.cycle.request.id)
-                this.cycle.history[this.cycle.request.id] = this.data;
-            // Add succesfull request responses by id
-            this.cycle.response.requests.push(Object.assign(Object.assign({}, getRequestModel(this.cycle.request)), { results: this.data }));
-        }
+        if (this.engine.request.serial)
+            this.engine.odometer[this.engine.request.serial] = this.data;
+        // Add succesfull request response by id
+        return Object.assign(Object.assign({}, getRequestEngine(this.engine.request)), { results: this.data });
     }
 }

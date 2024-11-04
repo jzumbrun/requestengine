@@ -4,25 +4,26 @@ import Handlebars from 'handlebars';
  * Compression
  */
 export default class Compression {
-    constructor(cycle) {
-        this.cycle = cycle;
+    constructor(engine) {
+        this.engine = engine;
         this.handlebars = Handlebars.create();
         this.HTMLEscapeExpression = this.handlebars.Utils.escapeExpression;
         this.params = [];
     }
     stroke() {
-        if (!this.cycle.engine.compression)
-            throw new Error('Request engines requires a compress property.');
-        const data = Object.assign(Object.assign({}, (this.cycle.request.properties || {})), { $rider: this.cycle.rider, $history: this.cycle.history, $engines: this.cycle.engine });
-        this.registerTools(this.cycle.tuning.tools);
-        const compiled = this.compile(this.cycle.engine.compression, data);
-        if (!this.cycle.tuning.query)
-            throw new Error('config.query is required in either the main or middleware config.');
-        return this.cycle.tuning.query(compiled, this.getParams());
+        const data = {
+            intake: this.engine.request.fuel,
+            rider: this.engine.rider,
+            odometer: this.engine.odometer,
+            model: this.engine.model
+        };
+        this.registerToolBox(this.engine.garage.toolbox);
+        const compiled = this.compile(this.engine.model.compression, data);
+        return this.engine.gear.drive(compiled, this.getParams());
     }
-    static compression(query, cycle) {
-        cycle.engine.compression = query;
-        const compression = new Compression(cycle);
+    static compressionStroke(query, engine) {
+        engine.model.compression = query;
+        const compression = new Compression(engine);
         return compression.stroke();
     }
     getParams() {
@@ -119,12 +120,12 @@ export default class Compression {
     /**
      * Throttle To Identifiers
      */
-    throttleToIdentifiers(enginesThrottle, value) {
-        if (!enginesThrottle)
+    throttleToIdentifiers(engineModelThrottle, value) {
+        if (!engineModelThrottle)
             return value;
         let identifiers = [];
         value = Array.isArray(value) ? value : [value];
-        enginesThrottle.forEach((throttle) => {
+        engineModelThrottle.forEach((throttle) => {
             const [name, alias] = throttle.split(' as ');
             value.forEach((val) => {
                 if (val === name || val === alias)
@@ -136,47 +137,44 @@ export default class Compression {
     /**
      * Register Tools
      */
-    registerTools(tools = []) {
+    registerToolBox(toolBox = []) {
         var _a;
         const $this = this;
         const handlebars = $this.handlebars;
-        tools.push({
-            prefix: '|',
+        toolBox.push({
+            prefix: ':',
             tools: {
-                // Identifiers Select statements
-                id: function (value, context) {
-                    return $this.throttleToIdentifiers(context.data.root.$engines.throttle, value);
-                },
-                ht: function (value) {
-                    return $this.HTMLEscapeExpression(value);
-                },
+                // Throttle `select` statements
+                throttle: function (value, context) {
+                    return $this.throttleToIdentifiers(context.data.root.model.throttle, value);
+                }
             },
         });
-        for (const tool of tools) {
+        for (const drawer of toolBox) {
             // Set defaults
-            tool.tools = tool.tools || {};
-            tool.prefix = tool.prefix || '';
-            tool.context = (_a = tool === null || tool === void 0 ? void 0 : tool.context) !== null && _a !== void 0 ? _a : true;
+            drawer.tools = drawer.tools || {};
+            drawer.prefix = drawer.prefix || '';
+            drawer.context = (_a = drawer === null || drawer === void 0 ? void 0 : drawer.context) !== null && _a !== void 0 ? _a : true;
             // Register a tool for every function
-            for (const funk in tool.tools) {
-                if (handlebars.Utils.isFunction(tool.tools[funk])) {
-                    if (tool.context) {
+            for (const funk in drawer.tools) {
+                if (handlebars.Utils.isFunction(drawer.tools[funk])) {
+                    if (drawer.context) {
                         // Native handlebars context use
-                        handlebars.registerHelper(`${tool.prefix}${funk}`, tool.tools[funk]);
+                        handlebars.registerHelper(`${drawer.prefix}${funk}`, drawer.tools[funk]);
                     }
                     else {
                         // Remove context from `this` and first arg
                         // Useful for black box tools like lodash/underscore
-                        handlebars.registerHelper(`${tool.prefix}${funk}`, function (...args) {
+                        handlebars.registerHelper(`${drawer.prefix}${funk}`, function (...args) {
                             // Take handlebar's context from the beginning
                             const context = args.pop();
                             // Are we dealing with a block?
                             if (handlebars.Utils.isFunction(context.fn)) {
-                                return tool.tools[funk](
+                                return drawer.tools[funk](
                                 // @ts-ignore ts(2683)
                                 context.fn(this), ...args);
                             }
-                            return tool.tools[funk](...args);
+                            return drawer.tools[funk](...args);
                         });
                     }
                 }

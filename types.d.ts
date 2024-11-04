@@ -66,8 +66,8 @@ export interface IResult {
   error? : EngineError
 }
 
-export interface IToolBox { 
-  prefix: string
+export interface IToolBox {
   tools: Record<string, (...args: any[]) => any>
+  prefix?: string
   context?: boolean
 }

@@ -49,13 +49,15 @@ export default class Start {
               tools: { 
                 type: 'object',
                 patternProperties: { 
-                  '.*': { typeof: 'function' }
-                }
+                  '^[_a-zA-Z]*$': { typeof: 'function' }
+                },
+                additionalProperties: false
               },
               context: { type: 'boolean' },
-              prefix: { type: 'string' }
+              prefix: { type: 'string', pattern: '^[_a-zA-Z]*$'}
             },
             required: ['tools'],
+            additionalProperties: false
           }
         }
       },

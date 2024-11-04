@@ -1,12 +1,13 @@
-import Cycle from './Cycle.js';
+import Engine from './Engine.js';
+import { IResult } from '../types.js';
 /**
  * Exhaust
  */
 export default class Exhaust {
     private avj;
-    private cycle;
+    private engine;
     private data;
-    constructor(cycle: Cycle, data: unknown);
-    stroke(): void;
+    constructor(engine: Engine, data: unknown);
+    stroke(): IResult;
 }
 //# sourceMappingURL=Exhaust.d.ts.map

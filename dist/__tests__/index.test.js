@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 import { describe, it, expect } from '@jest/globals';
 import { kickStart } from '../index.js';
 const queryStatement = (compression, data) => {
@@ -14,14 +23,20 @@ const queryStatement = (compression, data) => {
 };
 function start(engines) {
     return kickStart({
-        tools: [{ tools: {
+        engines,
+        toolbox: [
+            {
+                tools: {
                     trim: (str) => str.trim(),
                     eq: (a, b) => a === b,
                     isString: (str) => typeof str === 'string'
-                }, prefix: '_', context: false }],
-        release: () => null,
-        query: queryStatement,
-        engines
+                },
+                prefix: '_', context: false
+            }
+        ]
+    }, {
+        neutral: () => null,
+        drive: queryStatement
     });
 }
 describe('RequestEngine', () => {
@@ -31,31 +46,31 @@ describe('RequestEngine', () => {
                 res.data = response;
             }
         };
-        it('$riders.update', done => {
+        it(':riders:update', done => {
             start([{
-                    model: '$riders.update',
-                    compression: 'UPDATE riders SET {{rider}} WHERE id={{$rider.id}}',
+                    model: ':riders:update',
+                    compression: 'UPDATE riders SET {{intake.rider}} WHERE id = {{rider.license}}',
                     intake: { type: 'object', properties: { rider: { type: 'object' } } },
-                    exhaust: false,
-                    keys: ['rider']
+                    exhaust: { type: 'array' },
+                    ignition: ['rider']
                 }]).middleware()({
                 rider: {
-                    id: 123,
+                    license: 123,
                     keys: ['rider']
                 },
                 body: {
                     requests: [
                         {
-                            model: '$riders.update',
-                            properties: {
-                                rider: { model: 'Jon', age: 33 }
+                            engine: ':riders:update',
+                            fuel: {
+                                rider: { name: 'Jon', age: 33 }
                             }
                         }
                     ]
                 }
             }, res)
                 .then(() => {
-                expect(res.data.requests[0].results).toEqual(['UPDATE riders SET $1 = $2, $3 = $4', ['name', 'Jon', 'age', 33]]);
+                expect(res.data.requests[0].results).toEqual(['UPDATE riders SET $1 = $2, $3 = $4 WHERE id = $5', ['name', 'Jon', 'age', 33, 123]]);
                 done();
             })
                 .catch(error => {
@@ -67,58 +82,58 @@ describe('RequestEngine', () => {
                 {
                     model: 'immediate',
                     compression: '0',
-                    intake: false,
-                    exhaust: false,
-                    keys: ['rider']
+                    intake: { type: 'null' },
+                    exhaust: { type: 'string' },
+                    ignition: ['rider']
                 },
                 {
                     model: 'short',
                     compression: '100',
-                    intake: false,
-                    exhaust: false,
-                    keys: ['rider']
+                    intake: { type: 'null' },
+                    exhaust: { type: 'string' },
+                    ignition: ['rider']
                 },
                 {
                     model: 'long',
                     compression: '200',
-                    intake: false,
-                    exhaust: false,
-                    keys: ['rider']
+                    intake: { type: 'null' },
+                    exhaust: { type: 'string' },
+                    ignition: ['rider']
                 }
             ]).middleware()({
                 rider: {
-                    id: 123,
+                    license: 123,
                     keys: ['rider']
                 },
                 body: {
                     requests: [
                         {
-                            id: '1',
-                            model: 'long',
+                            serial: '1',
+                            engine: 'long',
                         },
                         {
-                            id: '2',
-                            model: 'long',
-                            async: true
+                            serial: '2',
+                            engine: 'long',
+                            timing: false
                         },
                         {
-                            id: '3',
-                            model: 'short',
-                            async: true
+                            serial: '3',
+                            engine: 'short',
+                            timing: false
                         },
                         {
-                            id: '4',
-                            model: 'immediate',
+                            serial: '4',
+                            engine: 'immediate',
                         }
                     ]
                 }
             }, res)
                 .then(() => {
                 expect(res.data.requests).toEqual([
-                    { id: '1', model: 'long', results: '200' },
-                    { id: '4', model: 'immediate', results: '0' },
-                    { id: '3', model: 'short', results: '100' },
-                    { id: '2', model: 'long', results: '200' }
+                    { "engine": "long", "results": "200", "serial": "1" },
+                    { "engine": "immediate", "results": "0", "serial": "4" },
+                    { "engine": "long", "results": "200", "serial": "2" },
+                    { "engine": "short", "results": "100", "serial": "3" }
                 ]);
                 done();
             })
@@ -129,33 +144,33 @@ describe('RequestEngine', () => {
         it('previous query results', done => {
             start([
                 {
-                    model: 'thing.one',
-                    compression: 'thing.one',
-                    intake: false,
-                    exhaust: false,
-                    keys: ['rider']
+                    model: 'thing:one',
+                    compression: 'thing:one',
+                    intake: { type: 'null' },
+                    exhaust: { type: 'array' },
+                    ignition: ['rider']
                 },
                 {
-                    model: 'thing.two',
-                    compression: 'thing.two is bigger than {{$history.one.[0]}}',
-                    intake: false,
-                    exhaust: false,
-                    keys: ['rider']
+                    model: 'thing:two',
+                    compression: 'thing:two is bigger than {{odometer.one.[0]}}',
+                    intake: { type: 'null' },
+                    exhaust: { type: 'array' },
+                    ignition: ['rider']
                 }
             ]).middleware()({
                 rider: {
-                    id: 123,
+                    license: 123,
                     keys: ['rider']
                 },
                 body: {
                     requests: [
                         {
-                            id: 'one',
-                            model: 'thing.one'
+                            serial: 'one',
+                            engine: 'thing:one'
                         },
                         {
-                            id: 'two',
-                            model: 'thing.two'
+                            serial: 'two',
+                            engine: 'thing:two'
                         }
                     ]
                 }
@@ -163,18 +178,14 @@ describe('RequestEngine', () => {
                 .then(() => {
                 expect(res.data.requests).toEqual([
                     {
-                        id: 'one',
-                        model: 'thing.one',
-                        intake: false,
-                        exhaust: false,
-                        results: ['thing.one', []]
+                        serial: 'one',
+                        engine: 'thing:one',
+                        results: ['thing:one', []]
                     },
                     {
-                        id: 'two',
-                        model: 'thing.two',
-                        intake: false,
-                        exhaust: false,
-                        results: ["thing.two is bigger than $1", ['thing.one']]
+                        serial: 'two',
+                        engine: 'thing:two',
+                        results: ["thing:two is bigger than $1", ['thing:one']]
                     }
                 ]);
                 done();
@@ -186,23 +197,23 @@ describe('RequestEngine', () => {
         it('registered tools', done => {
             start([
                 {
-                    model: 'thing.one',
-                    compression: 'thing.one {{_trim trimspace}}',
-                    intake: false,
-                    exhaust: false,
-                    keys: ['rider']
+                    model: 'thing:one',
+                    compression: 'thing:one {{_trim intake.trimspace}}',
+                    intake: { type: 'object', properties: { trimspace: { type: 'string' } } },
+                    exhaust: { type: 'array' },
+                    ignition: ['rider']
                 }
             ]).middleware()({
                 rider: {
-                    id: 123,
+                    license: 123,
                     keys: ['rider']
                 },
                 body: {
                     requests: [
                         {
-                            id: '1',
-                            model: 'thing.one',
-                            properties: {
+                            serial: '1',
+                            engine: 'thing:one',
+                            fuel: {
                                 trimspace: '  nospaces   '
                             }
                         }
@@ -212,9 +223,9 @@ describe('RequestEngine', () => {
                 .then(() => {
                 expect(res.data.requests).toEqual([
                     {
-                        id: '1',
-                        model: 'thing.one',
-                        results: ["thing.one $1", ['nospaces']]
+                        serial: '1',
+                        engine: 'thing:one',
+                        results: ["thing:one $1", ['nospaces']]
                     }
                 ]);
                 done();
@@ -232,40 +243,37 @@ describe('RequestEngine', () => {
                     compression: [
                         'UPDATE riders SET ',
                         '{{#_trim ', '}}',
-                        '{{#each fields}}',
+                        '{{#each intake.fields}}',
                         "{{#unless (_eq @key 'id')}}",
                         '{{@key}} = {{#if (_isString this)}}{{_trim this}}, {{else}}{{this}}, {{/if}}',
                         '{{/unless}}',
                         '{{/each}}',
                         '{{/_trim}}'
                     ].join(''),
-                    intake: false,
-                    exhaust: false,
-                    keys: ['rider']
+                    intake: { type: 'object', properties: { fields: { type: 'object' } } },
+                    exhaust: { type: 'array' },
+                    ignition: ['rider']
                 }
             ]).run([
                 {
-                    id: '1',
-                    model: 'nested',
-                    properties: {
+                    serial: '1',
+                    engine: 'nested',
+                    fuel: {
                         fields: {
-                            id: 1,
                             column1: 3,
                             column2: '  hello  '
                         }
                     }
                 }
             ], {
-                id: 123,
+                license: 123,
                 keys: ['rider']
             })
                 .then(({ requests }) => {
                 expect(requests).toEqual([
                     {
-                        id: '1',
-                        model: 'nested',
-                        intake: false,
-                        exhaust: false,
+                        serial: '1',
+                        engine: 'nested',
                         results: [
                             'UPDATE riders SET $1 = $2, $3 = $4,',
                             ['column1', 3, 'column2', 'hello']
@@ -278,77 +286,36 @@ describe('RequestEngine', () => {
                 done(error);
             });
         });
-        it('identfiers with alias', done => {
+        it('throttle with alias', done => {
             start([
                 {
                     model: 'alias',
                     throttle: ['first_name as firstName', 'last_name as lastName'],
-                    intake: false,
-                    exhaust: false,
-                    compression: 'SELECT {{:id select}} from riders where firstName={{firstName}}',
-                    keys: ['rider']
+                    intake: { type: 'object', properties: { firstName: { type: 'string' }, select: { type: 'array', items: {
+                                    enum: ['firstName', 'lastName']
+                                } } } },
+                    exhaust: { type: 'array' },
+                    compression: 'SELECT {{:throttle intake.select}} from riders where firstName = {{intake.firstName}}',
+                    ignition: ['rider']
                 }
             ]).run([
                 {
-                    model: 'alias',
-                    properties: {
+                    engine: 'alias',
+                    fuel: {
                         firstName: 'Abe',
-                        lastName: 'Lincoln',
-                        email: 'able@lincoln.com',
-                        select: ['lastName', 'firstName']
+                        select: ['lastName'],
                     }
                 }
             ], {
-                id: 123,
+                license: 123,
                 keys: ['rider']
             })
                 .then(({ requests }) => {
                 expect(requests).toEqual([
                     {
-                        model: 'alias',
+                        engine: 'alias',
                         results: [
-                            'SELECT "first_name" as "firstName", "last_name" as "lastName" from riders where firstName=$1',
-                            ['Abe']
-                        ]
-                    }
-                ]);
-                done();
-            })
-                .catch(error => {
-                done(error);
-            });
-        });
-        it('identfiers', done => {
-            start([
-                {
-                    model: 'alias',
-                    throttle: ['first_name', 'last_name'],
-                    intake: false,
-                    exhaust: false,
-                    compression: 'SELECT {{:id select}} from riders where first_name={{first_name}}',
-                    keys: ['rider']
-                }
-            ])
-                .run([
-                {
-                    model: 'alias',
-                    properties: {
-                        first_model: 'Abe',
-                        last_model: 'Lincoln',
-                        email: 'able@lincoln.com',
-                        select: ['last_name', 'first_name']
-                    }
-                }
-            ], {
-                id: 123,
-                keys: ['rider']
-            })
-                .then(({ requests }) => {
-                expect(requests).toEqual([
-                    {
-                        model: 'alias',
-                        results: [
-                            'SELECT "first_name", "last_name" from riders where first_name=$1',
+                            'SELECT "last_name" as "lastName" from riders where firstName = $1',
                             ['Abe']
                         ]
                     }
@@ -363,31 +330,243 @@ describe('RequestEngine', () => {
             start([
                 {
                     model: 'power',
-                    intake: false,
-                    exhaust: false,
-                    power: (data) => {
+                    intake: { type: 'null' },
+                    exhaust: { type: 'number' },
+                    power: () => {
                         return new Promise((resolve) => {
                             setTimeout(() => { resolve(1); }, 0);
                         });
                     },
-                    keys: ['rider']
+                    ignition: ['rider']
                 }
             ])
                 .run([
                 {
-                    model: 'handler'
+                    engine: 'power'
                 }
             ], {
-                id: 123,
+                license: 123,
                 keys: ['rider']
             })
                 .then(({ requests }) => {
-                expect(requests).toEqual([{ model: 'power', results: 1 }]);
+                expect(requests).toEqual([{ engine: 'power', results: 1 }]);
                 done();
             })
                 .catch(error => {
                 done(error);
             });
+        });
+        it('async power call compressionStroke', done => {
+            start([
+                {
+                    model: 'power',
+                    intake: { type: 'null' },
+                    exhaust: { type: 'array' },
+                    power: (engine_1, _a) => __awaiter(void 0, [engine_1, _a], void 0, function* (engine, { compressionStroke }) {
+                        const result = yield compressionStroke('callCompression', engine);
+                        return result;
+                    }),
+                    ignition: ['rider']
+                }
+            ])
+                .run([
+                {
+                    engine: 'power'
+                }
+            ], {
+                license: 123,
+                keys: ['rider']
+            })
+                .then(({ requests }) => {
+                expect(requests).toEqual([{ engine: 'power', results: ['callCompression', []] }]);
+                done();
+            })
+                .catch(error => {
+                done(error);
+            });
+        });
+        it('async power call engineCycle', done => {
+            start([
+                {
+                    model: 'another:engine',
+                    intake: { type: 'null' },
+                    exhaust: { type: 'array' },
+                    compression: 'another:engine:compression',
+                    ignition: ['system']
+                },
+                {
+                    model: 'power',
+                    intake: { type: 'null' },
+                    exhaust: { type: 'array' },
+                    power: (engine_1, _a) => __awaiter(void 0, [engine_1, _a], void 0, function* (engine, { engineCycle }) {
+                        const result = yield engineCycle({ engine: 'another:engine' }, { license: 'system', keys: ['system'] }, engine.garage, engine.gear);
+                        return result.results;
+                    }),
+                    ignition: ['rider']
+                }
+            ])
+                .run([
+                {
+                    engine: 'power'
+                }
+            ], {
+                license: 123,
+                keys: ['rider']
+            })
+                .then(({ requests }) => {
+                expect(requests).toEqual([{ engine: 'power', results: ['another:engine:compression', []] }]);
+                done();
+            })
+                .catch(error => {
+                done(error);
+            });
+        });
+        it('gear engines errors', done => {
+            try {
+                kickStart({ engines: false }, { drive: 'wrong' });
+            }
+            catch (error) {
+                expect(error.message).toEqual('ERROR_REQUEST_ENGINE_GARAGE_VALIDATION');
+                done();
+            }
+        });
+        it('gear drive errors', done => {
+            try {
+                kickStart({ engines: [] }, { drive: 'wrong' });
+            }
+            catch (error) {
+                expect(error.message).toEqual('ERROR_REQUEST_ENGINE_GEAR_VALIDATION');
+                done();
+            }
+        });
+        it('garage engine errors', done => {
+            try {
+                kickStart({
+                    engines: [{
+                            model: 'thing:one',
+                            compression: 'thing:one {{_trim intake.trimspace}}',
+                            power: () => { },
+                            intake: { type: 'object', properties: { trimspace: { type: 'string' } } },
+                            exhaust: { type: 'array' },
+                            ignition: ['rider']
+                        }]
+                }, { drive: () => { } });
+            }
+            catch (error) {
+                expect(error.message).toEqual('ERROR_REQUEST_ENGINE_ENGINES_VALIDATION');
+                done();
+            }
+        });
+        it('request intake errors', done => {
+            start([
+                {
+                    model: 'wrong:intake',
+                    intake: { type: 'string' },
+                    exhaust: { type: 'string' },
+                    compression: 'test',
+                    ignition: ['rider']
+                }
+            ]).run([
+                {
+                    engine: 'wrong:intake',
+                    fuel: { firstName: 'Abe' }
+                },
+                {
+                    engine: 'wrong:intake',
+                    fuel: { firstName: 'Gabe' }
+                }
+            ], {
+                license: 123,
+                keys: ['rider']
+            })
+                .then(({ requests }) => {
+                expect(requests.length).toEqual(1);
+                expect(requests[0].error.code).toEqual('ERROR_REQUEST_INTAKE_VALIDATION');
+                done();
+            })
+                .catch(error => {
+                done(error);
+            });
+        });
+        it('request wrong keys errors', done => {
+            start([
+                {
+                    model: 'wrong:keys',
+                    intake: { type: 'object' },
+                    exhaust: { type: 'array' },
+                    compression: 'test',
+                    ignition: ['rider']
+                }
+            ]).run([
+                {
+                    engine: 'wrong:keys',
+                    fuel: { firstName: 'Abe' }
+                }
+            ], {
+                license: 123,
+                keys: ['nothing']
+            })
+                .then(({ requests }) => {
+                expect(requests.length).toEqual(1);
+                expect(requests[0].error.code).toEqual('ERROR_REQUEST_WRONG_KEYS');
+                done();
+            })
+                .catch(error => {
+                done(error);
+            });
+        });
+        it('request wrong engine model errors', done => {
+            start([
+                {
+                    model: 'wrong:engine',
+                    intake: { type: 'object' },
+                    exhaust: { type: 'array' },
+                    compression: 'test',
+                    ignition: ['rider']
+                }
+            ]).run([
+                {
+                    engine: 'wrong:wrong',
+                    fuel: { firstName: 'Abe' }
+                }
+            ], {
+                license: 123,
+                keys: ['rider']
+            })
+                .then(({ requests }) => {
+                expect(requests.length).toEqual(1);
+                expect(requests[0].error.code).toEqual('ERROR_REQUEST_ENGINE_MODEL_NOT_FOUND');
+                done();
+            })
+                .catch(error => {
+                done(error);
+            });
+        });
+    });
+    describe('getEngineSchemas', () => {
+        it('should return the correct engine schemas', () => {
+            const engines = [
+                {
+                    model: 'engine1',
+                    intake: { type: 'object', properties: { field1: { type: 'string' } } },
+                    exhaust: { type: 'array' },
+                    compression: 'test1',
+                    ignition: ['rider']
+                },
+                {
+                    model: 'engine2',
+                    intake: { type: 'object', properties: { field2: { type: 'number' } } },
+                    exhaust: { type: 'array' },
+                    compression: 'test2',
+                    ignition: ['rider']
+                }
+            ];
+            const engine = start(engines);
+            const schemas = engine.getEngineSchemas();
+            expect(schemas).toEqual([
+                { model: 'engine1', intake: engines[0].intake, exhaust: engines[0].exhaust },
+                { model: 'engine2', intake: engines[1].intake, exhaust: engines[1].exhaust }
+            ]);
         });
     });
 });

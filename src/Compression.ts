@@ -8,10 +8,10 @@ interface IIdentifierParameter {
 }
 
 interface ICompressionData {
-  $intake: unknown
-  $rider: unknown
-  $odometer: unknown
-  $model: IEngineModel
+  intake: unknown
+  rider: unknown
+  odometer: unknown
+  model: IEngineModel
 }
 
 /**
@@ -32,10 +32,10 @@ export default class Compression {
 
   public stroke<T> (): Promise<T> {
     const data: ICompressionData = {
-      $intake: this.engine.request.fuel,
-      $rider: this.engine.rider,
-      $odometer: this.engine.odometer,
-      $model: this.engine.model
+      intake: this.engine.request.fuel,
+      rider: this.engine.rider,
+      odometer: this.engine.odometer,
+      model: this.engine.model
     }
     this.registerToolBox(this.engine.garage.toolbox)
     const compiled = this.compile(this.engine.model.compression!, data)
@@ -167,11 +167,11 @@ export default class Compression {
     const $this = this
     const handlebars = $this.handlebars
     toolBox.push({
-      prefix: '$',
+      prefix: ':',
       tools: {
-        // Identifiers Select statements
-        throttle: function (value: unknown, context: { data: { root: { $model: IEngineModel } } }) {
-          return $this.throttleToIdentifiers(context.data.root.$model.throttle, value)
+        // Throttle `select` statements
+        throttle: function (value: unknown, context: { data: { root: { model: IEngineModel } } }) {
+          return $this.throttleToIdentifiers(context.data.root.model.throttle, value)
         }
       },
     })

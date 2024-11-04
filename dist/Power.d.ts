@@ -1,10 +1,10 @@
-import Cycle from './Cycle.js';
+import Engine from './Engine.js';
 /**
  * Power
  */
 export default class Power {
-    private cycle;
-    constructor(cycle: Cycle);
+    private engine;
+    constructor(engine: Engine);
     stroke(): Promise<unknown>;
 }
 //# sourceMappingURL=Power.d.ts.map

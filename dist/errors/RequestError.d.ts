@@ -1,7 +1,7 @@
-import type { IRequestModel } from '../../types.d.ts';
+import type { IRequest } from '../../types.d.ts';
 import EngineError from './EngineError.js';
 export default class RequestError extends EngineError {
-    request: IRequestModel;
-    constructor(request: IRequestModel, errno: number, code: string, details?: any);
+    request: IRequest;
+    constructor(request: IRequest, errno: number, code: string, details?: any);
 }
 //# sourceMappingURL=RequestError.d.ts.map

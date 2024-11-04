@@ -1,23 +1,22 @@
-import type { IEngine, ITool } from '../types.d.js';
-import Cycle from './Cycle.js';
+import Engine from './Engine.js';
 /**
  * Compression
  */
 export default class Compression {
-    private cycle;
+    private engine;
     private handlebars;
     private HTMLEscapeExpression;
     private params;
-    constructor(cycle: Cycle);
-    stroke(): Promise<unknown>;
-    static compression(query: string, cycle: Cycle): Promise<unknown>;
+    constructor(engine: Engine);
+    stroke<T>(): Promise<T>;
+    static compressionStroke<T>(query: string, engine: Engine): Promise<T>;
     private getParams;
     private escapeIdentifier;
     /**
      * Compile
      * Allows us to override the escape expression just for this compile call.
      */
-    compile(statement: string, data: object): string;
+    private compile;
     /**
      * Register Escape Expression
      */
@@ -45,10 +44,10 @@ export default class Compression {
     /**
      * Throttle To Identifiers
      */
-    throttleToIdentifiers(enginesThrottle: IEngine['throttle'], value: unknown): unknown;
+    private throttleToIdentifiers;
     /**
      * Register Tools
      */
-    registerTools(tools?: ITool[]): void;
+    private registerToolBox;
 }
 //# sourceMappingURL=Compression.d.ts.map

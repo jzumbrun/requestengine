@@ -14,22 +14,20 @@ var __asyncValues = (this && this.__asyncValues) || function (o) {
     function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
     function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
 };
-import Cycle from './Cycle.js';
+import Engine from './Engine.js';
 import Start from './Start.js';
-import EngineError from './errors/EngineError.js';
 export default class RequestEngine {
-    constructor(tuning = {}) {
-        tuning.engines = tuning.engines || [];
-        tuning.env = process.env.NODE_ENV || 'production';
-        tuning.release = tuning.release || undefined;
-        tuning.query = tuning.query || undefined;
-        this.tuning = tuning;
+    constructor(garage, gear) {
+        garage.env = process.env.NODE_ENV || 'production';
+        gear.neutral = gear.neutral || undefined;
+        this.garage = garage;
+        this.gear = gear;
     }
     /**
      * Start
      */
     start() {
-        const start = new Start(this.tuning);
+        const start = new Start(this.garage, this.gear);
         start.turnOver();
     }
     /**
@@ -43,23 +41,26 @@ export default class RequestEngine {
         });
     }
     /**
-     * Execute queries
+     * Execute requests
      */
     run(requests, rider) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, requests_1, requests_1_1;
             var _b, e_1, _c, _d;
             const response = { requests: [] };
-            const async = [];
-            const history = {};
+            const timing = [];
+            const odometer = {};
             try {
                 try {
                     for (_a = true, requests_1 = __asyncValues(requests); requests_1_1 = yield requests_1.next(), _b = requests_1_1.done, !_b; _a = true) {
                         _d = requests_1_1.value;
                         _a = false;
                         const request = _d;
-                        const strokes = new Cycle(request, response, history, async, rider, this.tuning);
-                        yield strokes.stroke();
+                        const engineCyle = Engine.engineCycle(request, rider, this.garage, this.gear, odometer);
+                        if (request.timing === false)
+                            timing.push(engineCyle);
+                        else
+                            response.requests.push(yield engineCyle);
                     }
                 }
                 catch (e_1_1) { e_1 = { error: e_1_1 }; }
@@ -71,32 +72,32 @@ export default class RequestEngine {
                 }
                 // Process all of the async queries here
                 // The catch was defined above in the creation of the promise
-                if (async.length)
-                    yield Promise.all(async);
+                if (timing.length)
+                    response.requests.push(...yield Promise.all(timing));
             }
             catch (error) {
-                // Do we have any unknown issues?
-                const err = new EngineError(1007, 'ERROR_UNKNOWN');
-                if (this.tuning.env === 'production')
-                    response.requests.push(err);
-                else {
-                    err.details = error.message;
-                    response.requests.push(err);
-                }
+                error.details = error.details || error.message;
+                response.requests.push({ error });
             }
             finally {
-                if (typeof this.tuning.release === 'function')
-                    this.tuning.release(response);
+                if (typeof this.gear.neutral === 'function')
+                    this.gear.neutral(response);
             }
             return response;
         });
+    }
+    /**
+     * Get Engine Schemas
+     */
+    getEngineSchemas() {
+        return this.garage.engines.map(engine => ({ model: engine.model, intake: engine.intake, exhaust: engine.exhaust }));
     }
 }
 /**
  * Start
  */
-export function kickStart(tuning) {
-    const engine = new RequestEngine(tuning);
+export function kickStart(garage, gear) {
+    const engine = new RequestEngine(garage, gear);
     engine.start();
     return engine;
 }

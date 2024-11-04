@@ -43,7 +43,7 @@ describe('RequestEngine', () => {
     it(':riders:update', done => {
       start([{
           model: ':riders:update',
-          compression: 'UPDATE riders SET {{$intake.rider}} WHERE id = {{$rider.license}}',
+          compression: 'UPDATE riders SET {{intake.rider}} WHERE id = {{rider.license}}',
           intake: { type: 'object', properties: { rider: { type: 'object' } } },
           exhaust: { type: 'array' },
           ignition: ['rider']
@@ -157,7 +157,7 @@ describe('RequestEngine', () => {
         },
         {
           model: 'thing:two',
-          compression: 'thing:two is bigger than {{$odometer.one.[0]}}',
+          compression: 'thing:two is bigger than {{odometer.one.[0]}}',
           intake: { type: 'null' },
           exhaust: { type: 'array' },
           ignition: ['rider']
@@ -207,7 +207,7 @@ describe('RequestEngine', () => {
       start([
         {
           model: 'thing:one',
-          compression: 'thing:one {{_trim $intake.trimspace}}',
+          compression: 'thing:one {{_trim intake.trimspace}}',
           intake: { type: 'object', properties: { trimspace: { type: 'string'} } },
           exhaust: { type: 'array' },
           ignition: ['rider']
@@ -256,7 +256,7 @@ describe('RequestEngine', () => {
           compression: [
             'UPDATE riders SET ',
             '{{#_trim ', '}}',
-            '{{#each $intake.fields}}',
+            '{{#each intake.fields}}',
             "{{#unless (_eq @key 'id')}}",
             '{{@key}} = {{#if (_isString this)}}{{_trim this}}, {{else}}{{this}}, {{/if}}',
             '{{/unless}}',
@@ -309,7 +309,7 @@ describe('RequestEngine', () => {
             enum: ['firstName', 'lastName']
           } } } },
           exhaust: { type: 'array' },
-          compression: 'SELECT {{$throttle $intake.select}} from riders where firstName = {{$intake.firstName}}',
+          compression: 'SELECT {{:throttle intake.select}} from riders where firstName = {{intake.firstName}}',
           ignition: ['rider']
         }
       ]).run([

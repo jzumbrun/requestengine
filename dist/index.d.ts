@@ -1,8 +1,9 @@
-import type { ITuning, IRider, IRequest, IResponse, IHTTPRequest, IHTTPResponse } from '../types.d.js';
+import type { IRider, IRequest, IResponse, IHTTPRequest, IHTTPResponse, IEngineModel, IGarage, IGear } from '../types.d.js';
 export type * from '../types.d.ts';
 export default class RequestEngine {
-    readonly tuning: ITuning;
-    constructor(tuning?: ITuning);
+    readonly garage: IGarage;
+    readonly gear: IGear;
+    constructor(garage: IGarage, gear: IGear);
     /**
      * Start
      */
@@ -12,12 +13,16 @@ export default class RequestEngine {
      */
     middleware(): (req: IHTTPRequest, res: IHTTPResponse) => Promise<void>;
     /**
-     * Execute queries
+     * Execute requests
      */
     run(requests: IRequest[], rider: IRider): Promise<IResponse>;
+    /**
+     * Get Engine Schemas
+     */
+    getEngineSchemas(): Pick<IEngineModel, "model" | "intake" | "exhaust">[];
 }
 /**
  * Start
  */
-export declare function kickStart(tuning: ITuning): RequestEngine;
+export declare function kickStart(garage: IGarage, gear: IGear): RequestEngine;
 //# sourceMappingURL=index.d.ts.map

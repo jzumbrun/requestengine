@@ -1,13 +1,13 @@
-import Cycle from './Cycle.js';
+import Engine from './Engine.js';
 /**
  * Intake
  */
 export default class Intake {
-    private cycle;
+    private engine;
     private avj;
-    constructor(cycle: Cycle);
+    constructor(engine: Engine);
     stroke(): never | void;
-    keysIntersects(): boolean;
+    private ignitionKeysIntersects;
     /**
      * Check
      */
