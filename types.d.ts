@@ -30,17 +30,17 @@ export interface IEngineModel {
   throttle?: string[]
 }
 
-export interface IOdometer {
+export interface IRevolution {
   [key: string]: any
 }
 
-export interface IRider {
-  license: number | string
+export interface IOperator {
+  id: number | string
   keys: string[]
 }
 
 export interface IHTTPRequest {
-  rider: IRider
+  operator: IOperator
   body: { requests: IRequest[] }
 }
 

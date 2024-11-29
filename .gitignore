@@ -35,8 +35,8 @@ jspm_packages
 # Optional npm cache directory
 .npm
 
-# Optional REPL odometer
-.node_repl_odometer
+# Optional REPL revolution
+.node_repl_revolution
 
 .vscode/
 .vagrant/

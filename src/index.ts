@@ -1,5 +1,5 @@
-import type { IRider, 
-  IOdometer, IRequest, IResponse, IHTTPRequest, IHTTPResponse, 
+import type { IOperator, 
+  IRevolution, IRequest, IResponse, IHTTPRequest, IHTTPResponse, 
   IEngineModel, IResult,
   IGarage, IGear} from '../types.d.js'
 import Engine from './Engine.js'
@@ -31,7 +31,7 @@ export default class RequestEngine {
    */
   public middleware () {
     return async (req: IHTTPRequest, res: IHTTPResponse) => {
-      const response = await this.run(req.body?.requests || [], req.rider)
+      const response = await this.run(req.body?.requests || [], req.operator)
       res.send(response)
     }
   }
@@ -39,15 +39,15 @@ export default class RequestEngine {
   /**
    * Execute requests
    */
-  public async run (requests: IRequest[], rider: IRider): Promise<IResponse> {
+  public async run (requests: IRequest[], operator: IOperator): Promise<IResponse> {
 
     const response: IResponse = { requests: [] }
     const timing: Promise<IResult>[] = []
-    const odometer: IOdometer = {}
+    const revolution: IRevolution = {}
 
     try {
       for await (const request of requests) {
-        const engineCyle = Engine.engineCycle(request, rider, this.garage, this.gear, odometer)
+        const engineCyle = Engine.engineCycle(request, operator, this.garage, this.gear, revolution)
  
         if (request.timing === false) timing.push(engineCyle)
         else response.requests.push(await engineCyle)

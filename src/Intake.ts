@@ -36,7 +36,7 @@ export default class Intake {
 
   private ignitionKeysIntersects (): boolean {
     const setA = new Set(this.engine.model.ignition);
-    return (this.engine.rider?.keys || []).some(value => setA.has(value));
+    return (this.engine.operator?.keys || []).some(value => setA.has(value));
   }
 
   /**

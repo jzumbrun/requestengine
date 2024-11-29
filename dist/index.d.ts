@@ -1,4 +1,4 @@
-import type { IRider, IRequest, IResponse, IHTTPRequest, IHTTPResponse, IEngineModel, IGarage, IGear } from '../types.d.js';
+import type { IOperator, IRequest, IResponse, IHTTPRequest, IHTTPResponse, IEngineModel, IGarage, IGear } from '../types.d.js';
 export type * from '../types.d.ts';
 export default class RequestEngine {
     readonly garage: IGarage;
@@ -15,7 +15,7 @@ export default class RequestEngine {
     /**
      * Execute requests
      */
-    run(requests: IRequest[], rider: IRider): Promise<IResponse>;
+    run(requests: IRequest[], operator: IOperator): Promise<IResponse>;
     /**
      * Get Engine Schemas
      */

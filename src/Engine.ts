@@ -1,4 +1,4 @@
-import type { IGarage, IGear, IEngineModel, IOdometer, IRequest, IResult, IRider } from '../types.js'
+import type { IGarage, IGear, IEngineModel, IRevolution, IRequest, IResult, IOperator } from '../types.js'
 import Intake from './Intake.js'
 import Compression from './Compression.js'
 import Power from './Power.js'
@@ -9,8 +9,8 @@ import Exhaust from './Exhaust.js'
  */
 export default class Engine {
   readonly request: IRequest
-  readonly odometer: IOdometer
-  readonly rider: IRider
+  readonly revolution: IRevolution
+  readonly operator: IOperator
   readonly garage: IGarage
   readonly gear: IGear
 
@@ -18,22 +18,22 @@ export default class Engine {
 
   constructor(
     request: IRequest, 
-    rider: IRider,
+    operator: IOperator,
     garage: IGarage,
     gear: IGear,
-    odometer?: IOdometer
+    revolution?: IRevolution
   ) {
     this.request = request
-    this.rider = rider
+    this.operator = operator
     this.garage = garage
     this.gear = gear
     this.model = this.garage.engines?.find((engine) => engine.model === request.engine)
       || { model: '', ignition: [], intake: {}, exhaust: {} }
-    this.odometer = odometer || {}
+    this.revolution = revolution || {}
   }
 
-  public static engineCycle (request: IRequest, rider: IRider, garage: IGarage, gear: IGear, odometer?: IOdometer): Promise<IResult> {
-    const engine = new Engine(request, rider, garage, gear, odometer)
+  public static engineCycle (request: IRequest, operator: IOperator, garage: IGarage, gear: IGear, revolution?: IRevolution): Promise<IResult> {
+    const engine = new Engine(request, operator, garage, gear, revolution)
     return engine.cycle()
   }
 

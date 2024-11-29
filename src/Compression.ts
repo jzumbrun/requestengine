@@ -1,4 +1,4 @@
-import type { IEngineModel, IToolBox } from '../types.d.js'
+import type { IEngineModel, IRevolution, IToolBox, IOperator } from '../types.d.js'
 import Engine from './Engine.js'
 // Import necessary modules
 import Handlebars, { Utils } from 'handlebars'
@@ -9,9 +9,13 @@ interface IIdentifierParameter {
 
 interface ICompressionData {
   intake: unknown
-  rider: unknown
-  odometer: unknown
+  operator: IOperator
+  revolution: IRevolution
   model: IEngineModel
+  i: ICompressionData['intake']
+  o: ICompressionData['operator']
+  r: ICompressionData['revolution']
+  m: ICompressionData['model']
 }
 
 /**
@@ -31,11 +35,13 @@ export default class Compression {
   }
 
   public stroke<T> (): Promise<T> {
+    const intake = this.engine.request.fuel
+    const operator = this.engine.operator
+    const revolution = this.engine.revolution
+    const model = this.engine.model
     const data: ICompressionData = {
-      intake: this.engine.request.fuel,
-      rider: this.engine.rider,
-      odometer: this.engine.odometer,
-      model: this.engine.model
+      intake, operator, revolution, model,
+      i: intake, o: operator, r: revolution, m: model
     }
     this.registerToolBox(this.engine.garage.toolbox)
     const compiled = this.compile(this.engine.model.compression!, data)

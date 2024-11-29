@@ -36,27 +36,27 @@ export default class RequestEngine {
     middleware() {
         return (req, res) => __awaiter(this, void 0, void 0, function* () {
             var _a;
-            const response = yield this.run(((_a = req.body) === null || _a === void 0 ? void 0 : _a.requests) || [], req.rider);
+            const response = yield this.run(((_a = req.body) === null || _a === void 0 ? void 0 : _a.requests) || [], req.operator);
             res.send(response);
         });
     }
     /**
      * Execute requests
      */
-    run(requests, rider) {
+    run(requests, operator) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, requests_1, requests_1_1;
             var _b, e_1, _c, _d;
             const response = { requests: [] };
             const timing = [];
-            const odometer = {};
+            const revolution = {};
             try {
                 try {
                     for (_a = true, requests_1 = __asyncValues(requests); requests_1_1 = yield requests_1.next(), _b = requests_1_1.done, !_b; _a = true) {
                         _d = requests_1_1.value;
                         _a = false;
                         const request = _d;
-                        const engineCyle = Engine.engineCycle(request, rider, this.garage, this.gear, odometer);
+                        const engineCyle = Engine.engineCycle(request, operator, this.garage, this.gear, revolution);
                         if (request.timing === false)
                             timing.push(engineCyle);
                         else

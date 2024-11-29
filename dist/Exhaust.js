@@ -18,7 +18,7 @@ export default class Exhaust {
             throw new RequestError(getRequestEngine(this.engine.request), 1005, 'ERROR_REQUEST_EXHAUST_VALIDATION', this.avj.errors);
         }
         if (this.engine.request.serial)
-            this.engine.odometer[this.engine.request.serial] = this.data;
+            this.engine.revolution[this.engine.request.serial] = this.data;
         // Add succesfull request response by id
         return Object.assign(Object.assign({}, getRequestEngine(this.engine.request)), { results: this.data });
     }

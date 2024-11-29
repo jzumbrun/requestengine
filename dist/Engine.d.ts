@@ -1,16 +1,16 @@
-import type { IGarage, IGear, IEngineModel, IOdometer, IRequest, IResult, IRider } from '../types.js';
+import type { IGarage, IGear, IEngineModel, IRevolution, IRequest, IResult, IOperator } from '../types.js';
 /**
  * Engine
  */
 export default class Engine {
     readonly request: IRequest;
-    readonly odometer: IOdometer;
-    readonly rider: IRider;
+    readonly revolution: IRevolution;
+    readonly operator: IOperator;
     readonly garage: IGarage;
     readonly gear: IGear;
     readonly model: IEngineModel;
-    constructor(request: IRequest, rider: IRider, garage: IGarage, gear: IGear, odometer?: IOdometer);
-    static engineCycle(request: IRequest, rider: IRider, garage: IGarage, gear: IGear, odometer?: IOdometer): Promise<IResult>;
+    constructor(request: IRequest, operator: IOperator, garage: IGarage, gear: IGear, revolution?: IRevolution);
+    static engineCycle(request: IRequest, operator: IOperator, garage: IGarage, gear: IGear, revolution?: IRevolution): Promise<IResult>;
     private cycle;
 }
 //# sourceMappingURL=Engine.d.ts.map

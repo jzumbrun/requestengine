@@ -40,25 +40,25 @@ describe('RequestEngine', () => {
       }
     }
 
-    it(':riders:update', done => {
+    it(':operators:update', done => {
       start([{
-          model: ':riders:update',
-          compression: 'UPDATE riders SET {{intake.rider}} WHERE id = {{rider.license}}',
-          intake: { type: 'object', properties: { rider: { type: 'object' } } },
+          model: ':operators:update',
+          compression: 'UPDATE operators SET {{i.operator}} WHERE id = {{o.id}}',
+          intake: { type: 'object', properties: { operator: { type: 'object' } } },
           exhaust: { type: 'array' },
-          ignition: ['rider']
+          ignition: ['operator']
       }]).middleware()(
           {
-            rider: {
-              license: 123,
-              keys: ['rider']
+            operator: {
+              id: 123,
+              keys: ['operator']
             },
             body: {
               requests: [
                 {
-                  engine: ':riders:update',
+                  engine: ':operators:update',
                   fuel: {
-                    rider: { name: 'Jon', age: 33 }
+                    operator: { name: 'Jon', age: 33 }
                   }
                 }
               ]
@@ -68,7 +68,7 @@ describe('RequestEngine', () => {
         )
         .then(() => {
           expect(res.data.requests[0].results).toEqual(
-            ['UPDATE riders SET $1 = $2, $3 = $4 WHERE id = $5', ['name', 'Jon', 'age', 33, 123]]
+            ['UPDATE operators SET $1 = $2, $3 = $4 WHERE id = $5', ['name', 'Jon', 'age', 33, 123]]
           )
           done()
         })
@@ -84,28 +84,28 @@ describe('RequestEngine', () => {
             compression: '0',
             intake: { type: 'null' },
             exhaust: { type: 'string' },
-            ignition: ['rider']
+            ignition: ['operator']
           },
           {
             model: 'short',
             compression: '100',
             intake: { type: 'null' },
             exhaust: { type: 'string' },
-            ignition: ['rider']
+            ignition: ['operator']
           },
           {
             model: 'long',
             compression: '200',
             intake: { type: 'null' },
             exhaust: { type: 'string' },
-            ignition: ['rider']
+            ignition: ['operator']
           }
         ]
       ).middleware()(
           {
-            rider: {
-              license: 123,
-              keys: ['rider']
+            operator: {
+              id: 123,
+              keys: ['operator']
             },
             body: {
               requests: [
@@ -153,20 +153,20 @@ describe('RequestEngine', () => {
           compression: 'thing:one',
           intake: { type: 'null' },
           exhaust: { type: 'array' },
-          ignition: ['rider']
+          ignition: ['operator']
         },
         {
           model: 'thing:two',
-          compression: 'thing:two is bigger than {{odometer.one.[0]}}',
+          compression: 'thing:two is bigger than {{r.one.[0]}}',
           intake: { type: 'null' },
           exhaust: { type: 'array' },
-          ignition: ['rider']
+          ignition: ['operator']
         }
       ]).middleware()(
           {
-            rider: {
-              license: 123,
-              keys: ['rider']
+            operator: {
+              id: 123,
+              keys: ['operator']
             },
             body: {
               requests: [
@@ -207,16 +207,16 @@ describe('RequestEngine', () => {
       start([
         {
           model: 'thing:one',
-          compression: 'thing:one {{_trim intake.trimspace}}',
+          compression: 'thing:one {{_trim i.trimspace}}',
           intake: { type: 'object', properties: { trimspace: { type: 'string'} } },
           exhaust: { type: 'array' },
-          ignition: ['rider']
+          ignition: ['operator']
         }
       ]).middleware()(
           {
-            rider: {
-              license: 123,
-              keys: ['rider']
+            operator: {
+              id: 123,
+              keys: ['operator']
             },
             body: {
               requests: [
@@ -254,7 +254,7 @@ describe('RequestEngine', () => {
         {
           model: 'nested',
           compression: [
-            'UPDATE riders SET ',
+            'UPDATE operators SET ',
             '{{#_trim ', '}}',
             '{{#each intake.fields}}',
             "{{#unless (_eq @key 'id')}}",
@@ -265,7 +265,7 @@ describe('RequestEngine', () => {
           ].join(''),
           intake: { type: 'object', properties: { fields: { type: 'object' } } },
           exhaust: { type: 'array' },
-          ignition: ['rider']
+          ignition: ['operator']
         }
       ]).run([
         {
@@ -279,8 +279,8 @@ describe('RequestEngine', () => {
           }
         }
       ], {
-        license: 123,
-          keys: ['rider']
+        id: 123,
+          keys: ['operator']
       })
       .then(({ requests }) => {
         expect(requests).toEqual([
@@ -288,7 +288,7 @@ describe('RequestEngine', () => {
             serial: '1',
             engine: 'nested',
             results: [
-              'UPDATE riders SET $1 = $2, $3 = $4,',
+              'UPDATE operators SET $1 = $2, $3 = $4,',
               ['column1', 3, 'column2', 'hello']
             ]
           }
@@ -309,8 +309,8 @@ describe('RequestEngine', () => {
             enum: ['firstName', 'lastName']
           } } } },
           exhaust: { type: 'array' },
-          compression: 'SELECT {{:throttle intake.select}} from riders where firstName = {{intake.firstName}}',
-          ignition: ['rider']
+          compression: 'SELECT {{:throttle i.select}} from operators where firstName = {{i.firstName}}',
+          ignition: ['operator']
         }
       ]).run([
         {
@@ -321,8 +321,8 @@ describe('RequestEngine', () => {
           }
         }
       ], {
-            license: 123,
-            keys: ['rider']
+            id: 123,
+            keys: ['operator']
           },
       )
       .then(({ requests }) => {
@@ -330,7 +330,7 @@ describe('RequestEngine', () => {
           {
             engine: 'alias',
             results: [
-              'SELECT "last_name" as "lastName" from riders where firstName = $1',
+              'SELECT "last_name" as "lastName" from operators where firstName = $1',
               ['Abe']
             ]
           }
@@ -353,7 +353,7 @@ describe('RequestEngine', () => {
               setTimeout(() => { resolve(1) }, 0)
             })
           },
-          ignition: ['rider']
+          ignition: ['operator']
         }
       ])
         .run([
@@ -361,8 +361,8 @@ describe('RequestEngine', () => {
             engine: 'power'
           }
         ], {
-          license: 123,
-          keys: ['rider']
+          id: 123,
+          keys: ['operator']
         }
       )
       .then(({ requests }) => {
@@ -384,7 +384,7 @@ describe('RequestEngine', () => {
             const result = await compressionStroke('callCompression', engine)
             return result
           },
-          ignition: ['rider']
+          ignition: ['operator']
         }
       ])
         .run([
@@ -392,8 +392,8 @@ describe('RequestEngine', () => {
             engine: 'power'
           }
         ], {
-          license: 123,
-          keys: ['rider']
+          id: 123,
+          keys: ['operator']
         }
       )
       .then(({ requests }) => {
@@ -422,13 +422,13 @@ describe('RequestEngine', () => {
           power: async (engine, { engineCycle }) => {
             const result = await engineCycle(
               { engine: 'another:engine' },
-              { license: 'system', keys: ['system'] },
+              { id: 'system', keys: ['system'] },
               engine.garage,
               engine.gear
             )
             return result.results
           },
-          ignition: ['rider']
+          ignition: ['operator']
         }
       ])
         .run([
@@ -436,8 +436,8 @@ describe('RequestEngine', () => {
             engine: 'power'
           }
         ], {
-          license: 123,
-          keys: ['rider']
+          id: 123,
+          keys: ['operator']
         }
       )
       .then(({ requests }) => {
@@ -477,7 +477,7 @@ describe('RequestEngine', () => {
             power: () => {},
             intake: { type: 'object', properties: { trimspace: { type: 'string'} } },
             exhaust: { type: 'array' },
-            ignition: ['rider']
+            ignition: ['operator']
           }]
         } as any, { drive: () => {} } as any)
       } catch(error) {
@@ -493,7 +493,7 @@ describe('RequestEngine', () => {
           intake: { type: 'string' },
           exhaust: { type: 'string' },
           compression: 'test',
-          ignition: ['rider']
+          ignition: ['operator']
         }
       ]).run([
         {
@@ -505,8 +505,8 @@ describe('RequestEngine', () => {
           fuel: { firstName: 'Gabe'}
         }
       ], {
-            license: 123,
-            keys: ['rider']
+            id: 123,
+            keys: ['operator']
           },
       )
       .then(({ requests }) => {
@@ -526,7 +526,7 @@ describe('RequestEngine', () => {
           intake: { type: 'object' },
           exhaust: { type: 'array' },
           compression: 'test',
-          ignition: ['rider']
+          ignition: ['operator']
         }
       ]).run([
         {
@@ -534,7 +534,7 @@ describe('RequestEngine', () => {
           fuel: { firstName: 'Abe'}
         }
       ], {
-            license: 123,
+            id: 123,
             keys: ['nothing']
           },
       )
@@ -555,7 +555,7 @@ describe('RequestEngine', () => {
           intake: { type: 'object' },
           exhaust: { type: 'array' },
           compression: 'test',
-          ignition: ['rider']
+          ignition: ['operator']
         }
       ]).run([
         {
@@ -563,8 +563,8 @@ describe('RequestEngine', () => {
           fuel: { firstName: 'Abe'}
         }
       ], {
-            license: 123,
-            keys: ['rider']
+            id: 123,
+            keys: ['operator']
           },
       )
       .then(({ requests }) => {
@@ -586,14 +586,14 @@ describe('RequestEngine', () => {
           intake: { type: 'object', properties: { field1: { type: 'string' } } },
           exhaust: { type: 'array' },
           compression: 'test1',
-          ignition: ['rider']
+          ignition: ['operator']
         },
         {
           model: 'engine2',
           intake: { type: 'object', properties: { field2: { type: 'number' } } },
           exhaust: { type: 'array' },
           compression: 'test2',
-          ignition: ['rider']
+          ignition: ['operator']
         }
       ]
 
