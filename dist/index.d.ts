@@ -15,7 +15,7 @@ export default class RequestEngine {
     /**
      * Execute requests
      */
-    run(requests: IRequest[], operator: IOperator): Promise<IResponse>;
+    run(requests: IRequest[], operator?: IOperator): Promise<IResponse>;
     /**
      * Get Engine Schemas
      */

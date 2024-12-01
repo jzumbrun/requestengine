@@ -39,7 +39,7 @@ export default class RequestEngine {
   /**
    * Execute requests
    */
-  public async run (requests: IRequest[], operator: IOperator): Promise<IResponse> {
+  public async run (requests: IRequest[], operator?: IOperator): Promise<IResponse> {
 
     const response: IResponse = { requests: [] }
     const timing: Promise<IResult>[] = []
@@ -47,7 +47,7 @@ export default class RequestEngine {
 
     try {
       for await (const request of requests) {
-        const engineCyle = Engine.engineCycle(request, operator, this.garage, this.gear, revolution)
+        const engineCyle = Engine.engineCycle(request, this.garage, this.gear, operator, revolution)
  
         if (request.timing === false) timing.push(engineCyle)
         else response.requests.push(await engineCyle)

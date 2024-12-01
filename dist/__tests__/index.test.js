@@ -399,7 +399,7 @@ describe('RequestEngine', () => {
                     intake: { type: 'null' },
                     exhaust: { type: 'array' },
                     power: (engine_1, _a) => __awaiter(void 0, [engine_1, _a], void 0, function* (engine, { engineCycle }) {
-                        const result = yield engineCycle({ engine: 'another:engine' }, { id: 'system', keys: ['system'] }, engine.garage, engine.gear);
+                        const result = yield engineCycle({ engine: 'another:engine' }, engine.garage, engine.gear, { id: 'system', keys: ['system'] });
                         return result.results;
                     }),
                     ignition: ['operator']
@@ -515,7 +515,7 @@ describe('RequestEngine', () => {
                 done(error);
             });
         });
-        it('allows empy ignition', done => {
+        it('allows empy ignition with operator', done => {
             start([
                 {
                     model: 'empy:ignition',
@@ -531,6 +531,31 @@ describe('RequestEngine', () => {
             ], {
                 id: 123,
                 keys: ['operator']
+            })
+                .then(({ requests }) => {
+                expect(requests).toEqual([{ engine: 'empy:ignition', results: ['test', []] }]);
+                done();
+            })
+                .catch(error => {
+                done(error);
+            });
+        });
+        it('allows empy ignition with no operator', done => {
+            start([
+                {
+                    model: 'empy:ignition',
+                    intake: { type: 'null' },
+                    exhaust: { type: 'array' },
+                    compression: 'test',
+                    ignition: []
+                }
+            ]).run([
+                {
+                    engine: 'empy:ignition',
+                }
+            ], {
+                id: -1,
+                keys: []
             })
                 .then(({ requests }) => {
                 expect(requests).toEqual([{ engine: 'empy:ignition', results: ['test', []] }]);

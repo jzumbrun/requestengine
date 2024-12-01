@@ -9,7 +9,7 @@ interface IIdentifierParameter {
 
 interface ICompressionData {
   intake: unknown
-  operator: IOperator
+  operator?: IOperator
   revolution: IRevolution
   model: IEngineModel
   i: ICompressionData['intake']

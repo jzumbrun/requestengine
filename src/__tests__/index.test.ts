@@ -422,9 +422,9 @@ describe('RequestEngine', () => {
           power: async (engine, { engineCycle }) => {
             const result = await engineCycle(
               { engine: 'another:engine' },
-              { id: 'system', keys: ['system'] },
               engine.garage,
-              engine.gear
+              engine.gear,
+              { id: 'system', keys: ['system'] },
             )
             return result.results
           },
@@ -548,7 +548,7 @@ describe('RequestEngine', () => {
       })
     })
 
-    it('allows empy ignition', done => {
+    it('allows empy ignition with operator', done => {
       start([
         {
           model: 'empy:ignition',
@@ -565,6 +565,30 @@ describe('RequestEngine', () => {
             id: 123,
             keys: ['operator']
           },
+      )
+      .then(({ requests }) => {
+        expect(requests).toEqual([{engine: 'empy:ignition', results: ['test', []]}])
+        done()
+      })
+      .catch(error => {
+        done(error)
+      })
+    })
+
+    it('allows empy ignition with no operator', done => {
+      start([
+        {
+          model: 'empy:ignition',
+          intake: { type: 'null' },
+          exhaust: { type: 'array' },
+          compression: 'test',
+          ignition: []
+        }
+      ]).run([
+        {
+          engine: 'empy:ignition',
+        }
+      ]
       )
       .then(({ requests }) => {
         expect(requests).toEqual([{engine: 'empy:ignition', results: ['test', []]}])
@@ -603,6 +627,7 @@ describe('RequestEngine', () => {
         done(error)
       })
     })
+    
   })
 
   describe('getEngineSchemas', () => {

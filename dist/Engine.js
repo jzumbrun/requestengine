@@ -15,7 +15,7 @@ import Exhaust from './Exhaust.js';
  * Engine
  */
 export default class Engine {
-    constructor(request, operator, garage, gear, revolution) {
+    constructor(request, garage, gear, operator, revolution) {
         var _a;
         this.request = request;
         this.operator = operator;
@@ -25,8 +25,8 @@ export default class Engine {
             || { model: '', ignition: [], intake: {}, exhaust: {} };
         this.revolution = revolution || {};
     }
-    static engineCycle(request, operator, garage, gear, revolution) {
-        const engine = new Engine(request, operator, garage, gear, revolution);
+    static engineCycle(request, garage, gear, operator, revolution) {
+        const engine = new Engine(request, garage, gear, operator, revolution);
         return engine.cycle();
     }
     cycle() {

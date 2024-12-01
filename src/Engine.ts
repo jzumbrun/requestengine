@@ -10,7 +10,7 @@ import Exhaust from './Exhaust.js'
 export default class Engine {
   readonly request: IRequest
   readonly revolution: IRevolution
-  readonly operator: IOperator
+  readonly operator?: IOperator
   readonly garage: IGarage
   readonly gear: IGear
 
@@ -18,10 +18,10 @@ export default class Engine {
 
   constructor(
     request: IRequest, 
-    operator: IOperator,
     garage: IGarage,
     gear: IGear,
-    revolution?: IRevolution
+    operator?: IOperator,
+    revolution?: IRevolution,
   ) {
     this.request = request
     this.operator = operator
@@ -32,8 +32,8 @@ export default class Engine {
     this.revolution = revolution || {}
   }
 
-  public static engineCycle (request: IRequest, operator: IOperator, garage: IGarage, gear: IGear, revolution?: IRevolution): Promise<IResult> {
-    const engine = new Engine(request, operator, garage, gear, revolution)
+  public static engineCycle (request: IRequest, garage: IGarage, gear: IGear, operator?: IOperator, revolution?: IRevolution): Promise<IResult> {
+    const engine = new Engine(request,  garage, gear, operator, revolution)
     return engine.cycle()
   }
 

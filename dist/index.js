@@ -56,7 +56,7 @@ export default class RequestEngine {
                         _d = requests_1_1.value;
                         _a = false;
                         const request = _d;
-                        const engineCyle = Engine.engineCycle(request, operator, this.garage, this.gear, revolution);
+                        const engineCyle = Engine.engineCycle(request, this.garage, this.gear, operator, revolution);
                         if (request.timing === false)
                             timing.push(engineCyle);
                         else
