@@ -553,10 +553,7 @@ describe('RequestEngine', () => {
                 {
                     engine: 'empy:ignition',
                 }
-            ], {
-                id: -1,
-                keys: []
-            })
+            ])
                 .then(({ requests }) => {
                 expect(requests).toEqual([{ engine: 'empy:ignition', results: ['test', []] }]);
                 done();
