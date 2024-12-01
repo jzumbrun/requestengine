@@ -548,6 +548,33 @@ describe('RequestEngine', () => {
       })
     })
 
+    it('allows empy ignition', done => {
+      start([
+        {
+          model: 'empy:ignition',
+          intake: { type: 'null' },
+          exhaust: { type: 'array' },
+          compression: 'test',
+          ignition: []
+        }
+      ]).run([
+        {
+          engine: 'empy:ignition',
+        }
+      ], {
+            id: 123,
+            keys: ['operator']
+          },
+      )
+      .then(({ requests }) => {
+        expect(requests).toEqual([{engine: 'empy:ignition', results: ['test', []]}])
+        done()
+      })
+      .catch(error => {
+        done(error)
+      })
+    })
+
     it('request wrong engine model errors', done => {
       start([
         {
