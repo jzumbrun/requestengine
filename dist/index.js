@@ -7,13 +7,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __asyncValues = (this && this.__asyncValues) || function (o) {
-    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-    var m = o[Symbol.asyncIterator], i;
-    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
-};
 import Engine from './Engine.js';
 import Start from './Start.js';
 export default class RequestEngine {
@@ -45,30 +38,16 @@ export default class RequestEngine {
      */
     run(requests, operator) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, requests_1, requests_1_1;
-            var _b, e_1, _c, _d;
             const response = { requests: [] };
             const timing = [];
             const revolution = {};
             try {
-                try {
-                    for (_a = true, requests_1 = __asyncValues(requests); requests_1_1 = yield requests_1.next(), _b = requests_1_1.done, !_b; _a = true) {
-                        _d = requests_1_1.value;
-                        _a = false;
-                        const request = _d;
-                        const engineCyle = Engine.engineCycle(request, this.garage, this.gear, operator, revolution);
-                        if (request.timing === false)
-                            timing.push(engineCyle);
-                        else
-                            response.requests.push(yield engineCyle);
-                    }
-                }
-                catch (e_1_1) { e_1 = { error: e_1_1 }; }
-                finally {
-                    try {
-                        if (!_a && !_b && (_c = requests_1.return)) yield _c.call(requests_1);
-                    }
-                    finally { if (e_1) throw e_1.error; }
+                for (const request of requests) {
+                    const engineCyle = Engine.engineCycle(request, this.garage, this.gear, operator, revolution);
+                    if (request.timing === false)
+                        timing.push(engineCyle);
+                    else
+                        response.requests.push(yield engineCyle);
                 }
                 // Process all of the async queries here
                 // The catch was defined above in the creation of the promise
