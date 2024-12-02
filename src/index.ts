@@ -46,7 +46,7 @@ export default class RequestEngine {
     const revolution: IRevolution = {}
 
     try {
-      for await (const request of requests) {
+      for (const request of requests) {
         const engineCyle = Engine.engineCycle(request, this.garage, this.gear, operator, revolution)
  
         if (request.timing === false) timing.push(engineCyle)
