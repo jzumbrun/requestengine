@@ -71,3 +71,14 @@ export interface IToolBox {
   prefix?: string
   context?: boolean
 }
+
+export interface IIntakeValves {
+  intake: unknown
+  operator?: IOperator
+  revolution: IRevolution
+  model: IEngineModel
+  i: IIntakeValves['intake']
+  o: IIntakeValves['operator']
+  r: IIntakeValves['revolution']
+  m: IIntakeValves['model']
+}

@@ -1,21 +1,10 @@
-import type { IEngineModel, IRevolution, IToolBox, IOperator } from '../types.d.js'
+import type { IEngineModel, IToolBox, } from '../types.d.js'
 import Engine from './Engine.js'
 // Import necessary modules
 import Handlebars, { Utils } from 'handlebars'
 
 interface IIdentifierParameter {
   __identifier__: { name: string, alias: string }
-}
-
-interface ICompressionData {
-  intake: unknown
-  operator?: IOperator
-  revolution: IRevolution
-  model: IEngineModel
-  i: ICompressionData['intake']
-  o: ICompressionData['operator']
-  r: ICompressionData['revolution']
-  m: ICompressionData['model']
 }
 
 /**
@@ -39,12 +28,9 @@ export default class Compression {
     const operator = this.engine.operator
     const revolution = this.engine.revolution
     const model = this.engine.model
-    const data: ICompressionData = {
-      intake, operator, revolution, model,
-      i: intake, o: operator, r: revolution, m: model
-    }
+
     this.registerToolBox(this.engine.garage.toolbox)
-    const compiled = this.compile(this.engine.model.compression!, data)
+    const compiled = this.compile()
     return this.engine.gear.drive!(compiled, this.getParams())
   }
 
@@ -66,10 +52,10 @@ export default class Compression {
    * Compile
    * Allows us to override the escape expression just for this compile call.
    */
-  private compile(statement: string, data: ICompressionData): string {
+  private compile(): string {
     this.params = []
     this.registerEscapeExpression()
-    const compiled = this.handlebars.compile(statement)(data)
+    const compiled = this.handlebars.compile(this.engine.model.compression)(this.engine.intakeValves)
     this.unRegisterEscapeExpression()
     return compiled
   }

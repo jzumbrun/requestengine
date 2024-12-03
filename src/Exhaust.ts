@@ -11,24 +11,24 @@ import RequestError from './errors/RequestError.js'
 export default class Exhaust {
   private avj: Ajv
   private engine: Engine
-  private data: unknown
+  private exhaustValves: unknown
 
-  constructor(engine: Engine, data: unknown) {
+  constructor(engine: Engine, exhaustValves: unknown) {
     this.avj = new Ajv({ useDefaults: true, removeAdditional: 'all' })
     ajvKeywords.default(this.avj)
     this.engine = engine
-    this.data = data
+    this.exhaustValves = exhaustValves
   }
 
   public stroke (): IResult {
     // Do we have proper exhaust schema
-    if (this.engine.model.exhaust && !this.avj.validate(this.engine.model.exhaust, this.data)) {
+    if (this.engine.model.exhaust && !this.avj.validate(this.engine.model.exhaust, this.exhaustValves)) {
       throw new RequestError(getRequestEngine(this.engine.request), 1005, 'ERROR_REQUEST_EXHAUST_VALIDATION', this.avj.errors)
     }
 
-    if (this.engine.request.serial) this.engine.revolution[this.engine.request.serial] = this.data
+    if (this.engine.request.serial) this.engine.revolution[this.engine.request.serial] = this.exhaustValves
     // Add succesfull request response by id
-    return { ...getRequestEngine(this.engine.request), results: this.data }
+    return { ...getRequestEngine(this.engine.request), results: this.exhaustValves }
   }
   
 }
