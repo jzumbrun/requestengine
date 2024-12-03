@@ -4,6 +4,7 @@ import type { IOperator,
   IGarage, IGear} from '../types.d.js'
 import Engine from './Engine.js'
 import Start from './Start.js'
+export * from './errors/index.js'
 
 export type * from '../types.d.ts'
 
