@@ -15,12 +15,8 @@ export default class Compression {
         const operator = this.engine.operator;
         const revolution = this.engine.revolution;
         const model = this.engine.model;
-        const data = {
-            intake, operator, revolution, model,
-            i: intake, o: operator, r: revolution, m: model
-        };
         this.registerToolBox(this.engine.garage.toolbox);
-        const compiled = this.compile(this.engine.model.compression, data);
+        const compiled = this.compile();
         return this.engine.gear.drive(compiled, this.getParams());
     }
     static compressionStroke(query, engine) {
@@ -38,10 +34,10 @@ export default class Compression {
      * Compile
      * Allows us to override the escape expression just for this compile call.
      */
-    compile(statement, data) {
+    compile() {
         this.params = [];
         this.registerEscapeExpression();
-        const compiled = this.handlebars.compile(statement)(data);
+        const compiled = this.handlebars.compile(this.engine.model.compression)(this.engine.intakeValves);
         this.unRegisterEscapeExpression();
         return compiled;
     }

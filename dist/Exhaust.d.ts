@@ -6,8 +6,8 @@ import { IResult } from '../types.js';
 export default class Exhaust {
     private avj;
     private engine;
-    private data;
-    constructor(engine: Engine, data: unknown);
+    private exhaustValves;
+    constructor(engine: Engine, exhaustValves: unknown);
     stroke(): IResult;
 }
 //# sourceMappingURL=Exhaust.d.ts.map
