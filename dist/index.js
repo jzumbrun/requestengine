@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import Engine from './Engine.js';
 import Start from './Start.js';
+export * from './errors/index.js';
 export default class RequestEngine {
     constructor(garage, gear) {
         garage.env = process.env.NODE_ENV || 'production';
