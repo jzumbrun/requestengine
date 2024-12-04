@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 // Import necessary modules
 import Handlebars from 'handlebars';
 /**
@@ -11,10 +20,6 @@ export default class Compression {
         this.params = [];
     }
     stroke() {
-        const intake = this.engine.request.fuel;
-        const operator = this.engine.operator;
-        const revolution = this.engine.revolution;
-        const model = this.engine.model;
         this.registerToolBox(this.engine.garage.toolbox);
         const compiled = this.compile();
         return this.engine.gear.drive(compiled, this.getParams());
@@ -23,6 +28,12 @@ export default class Compression {
         engine.model.compression = query;
         const compression = new Compression(engine);
         return compression.stroke();
+    }
+    static compressionFirstStroke(query, engine) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield Compression.compressionStroke(query, engine);
+            return Array.isArray(response) ? response[0] : response;
+        });
     }
     getParams() {
         return this.params;
@@ -53,24 +64,11 @@ export default class Compression {
      * Parameterize
      */
     parameterize(value) {
-        if (typeof value === 'object') {
-            if (Array.isArray(value)) {
-                return this.arrayToList(value);
-            }
-            else if (value.__identifier__) {
-                return this.objectToIdentifier(value.__identifier__);
-            }
-            else {
-                return this.objectToValues(value);
-            }
-        }
-        else {
-            const index = this.params.indexOf(value);
-            if (index > -1)
-                return '$' + (index + 1);
-            this.params.push(value);
-            return '$' + this.params.length;
-        }
+        const index = this.params.indexOf(value);
+        if (index > -1)
+            return '$' + (index + 1);
+        this.params.push(value);
+        return '$' + this.params.length;
     }
     /**
      * Unregister Escape Expression
@@ -81,56 +79,26 @@ export default class Compression {
     /**
      * Array to List
      */
-    arrayToList(array) {
+    arrayToList(array, escape = false) {
         let sql = '';
         array.forEach((val, i) => {
-            if (Array.isArray(val)) {
-                sql += (i === 0 ? '' : ', ') + '(' + this.arrayToList(val) + ')';
-            }
-            else {
-                sql += (i === 0 ? '' : ', ') + this.parameterize(val);
-            }
+            sql += (i === 0 ? '' : ', ') + (escape ? this.escapeIdentifier(val) : this.parameterize(val));
         });
         return sql;
     }
     /**
-     * Object to Throttle
+     * Object Set
      */
-    objectToIdentifier({ name, alias }) {
-        return (alias)
-            ? `${this.escapeIdentifier(name)} as ${this.escapeIdentifier(alias)}`
-            : `${this.escapeIdentifier(name)}`;
-    }
-    /**
-     * Object to Values
-     */
-    objectToValues(object) {
+    objectSet(object) {
         let sql = '';
         for (const key in object) {
             sql +=
                 (sql.length === 0 ? '' : ', ') +
-                    this.parameterize(key) +
+                    this.escapeIdentifier(key) +
                     ' = ' +
                     this.parameterize(object[key]);
         }
         return sql;
-    }
-    /**
-     * Throttle To Identifiers
-     */
-    throttleToIdentifiers(engineModelThrottle, value) {
-        if (!engineModelThrottle)
-            return value;
-        let identifiers = [];
-        value = Array.isArray(value) ? value : [value];
-        engineModelThrottle.forEach((throttle) => {
-            const [name, alias] = throttle.split(' as ');
-            value.forEach((val) => {
-                if (val === name || val === alias)
-                    identifiers.push({ __identifier__: { name, alias } });
-            });
-        });
-        return identifiers.length === 1 ? identifiers[0] : identifiers;
     }
     /**
      * Register Tools
@@ -142,10 +110,19 @@ export default class Compression {
         toolBox.push({
             prefix: ':',
             tools: {
-                // Throttle `select` statements
-                throttle: function (value, context) {
-                    return $this.throttleToIdentifiers(context.data.root.model.throttle, value);
-                }
+                set: function (value) {
+                    return $this.objectSet(value);
+                },
+                keys: function (value) {
+                    if (Array.isArray(value))
+                        return $this.arrayToList(value, true);
+                    return $this.arrayToList(Object.keys(value), true);
+                },
+                values: function (value) {
+                    if (Array.isArray(value))
+                        return $this.arrayToList(value);
+                    return $this.arrayToList(Object.values(value));
+                },
             },
         });
         for (const drawer of toolBox) {

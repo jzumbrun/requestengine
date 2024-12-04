@@ -9,7 +9,8 @@ export default class Compression {
     private params;
     constructor(engine: Engine);
     stroke<T>(): Promise<T>;
-    static compressionStroke<T>(query: string, engine: Engine): Promise<T>;
+    static compressionStroke<T>(query: string, engine: Engine): Promise<T[]>;
+    static compressionFirstStroke<T>(query: string, engine: Engine): Promise<T>;
     private getParams;
     private escapeIdentifier;
     /**
@@ -34,17 +35,9 @@ export default class Compression {
      */
     private arrayToList;
     /**
-     * Object to Throttle
+     * Object Set
      */
-    private objectToIdentifier;
-    /**
-     * Object to Values
-     */
-    private objectToValues;
-    /**
-     * Throttle To Identifiers
-     */
-    private throttleToIdentifiers;
+    private objectSet;
     /**
      * Register Tools
      */

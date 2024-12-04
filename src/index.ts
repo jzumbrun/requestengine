@@ -4,8 +4,14 @@ import type { IOperator,
   IGarage, IGear} from '../types.d.js'
 import Engine from './Engine.js'
 import Start from './Start.js'
-export * from './errors/index.js'
 
+export * as Start from './Start.js'
+export * as Engine from './Engine.js'
+export * as Intake from './Intake.js'
+export * as Compression from './Compression.js'
+export * as Power from './Power.js'
+export * as Exhaust from './Exhaust.js'
+export * from './errors/index.js'
 export type * from '../types.d.ts'
 
 export default class RequestEngine {

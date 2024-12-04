@@ -1,11 +1,9 @@
-import type { IEngineModel, IToolBox, } from '../types.d.js'
+import type { IToolBox } from '../types.d.js'
 import Engine from './Engine.js'
 // Import necessary modules
 import Handlebars, { Utils } from 'handlebars'
+import { RequestError } from './errors/index.js'
 
-interface IIdentifierParameter {
-  __identifier__: { name: string, alias: string }
-}
 
 /**
  * Compression
@@ -24,20 +22,20 @@ export default class Compression {
   }
 
   public stroke<T> (): Promise<T> {
-    const intake = this.engine.request.fuel
-    const operator = this.engine.operator
-    const revolution = this.engine.revolution
-    const model = this.engine.model
-
     this.registerToolBox(this.engine.garage.toolbox)
     const compiled = this.compile()
     return this.engine.gear.drive!(compiled, this.getParams())
   }
 
-  public static compressionStroke<T> (query: string, engine: Engine): Promise<T> {
+  public static compressionStroke<T> (query: string, engine: Engine): Promise<T[]> {
     engine.model.compression = query
     const compression = new Compression(engine)
-    return compression.stroke<T>() 
+    return compression.stroke<T[]>() 
+  }
+
+  public static async compressionFirstStroke<T> (query: string, engine: Engine): Promise<T> {
+    const response = await Compression.compressionStroke<T>(query, engine)
+    return Array.isArray(response) ? response[0] : response
   }
 
   private getParams(): unknown[] {
@@ -73,20 +71,30 @@ export default class Compression {
    * Parameterize
    */
   private parameterize(value: any): string {
-    if (typeof value === 'object') {
-      if (Array.isArray(value)) {
-        return this.arrayToList(value)
-      } else if (value.__identifier__) {
-        return this.objectToIdentifier(value.__identifier__)
-      } else {
-        return this.objectToValues(value)
+    if(typeof value === 'object' && value.__tool__) {
+      switch(value.__tool__) {
+        case 'keyvals':
+          if(typeof value.value !== 'object') throw new RequestError(this.engine.request, 2510, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':keyvals must be an object' })
+          return this.keyvals(value.value)
+        case 'keys':
+          if(typeof value.value !== 'object') throw new RequestError(this.engine.request, 2520, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':keys must be an array or object' })
+          return Array.isArray(value.value)
+            ? this.arrayToList(value.value, true)
+            : this.arrayToList(Object.keys(value.value), true) 
+        case 'values':
+          if(typeof value.value !== 'object') throw new RequestError(this.engine.request, 2530, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':values must be an array or object' })
+          return Array.isArray(value.value)
+            ? this.arrayToList(value.value)
+            : this.arrayToList(Object.values(value.value)) 
       }
-    } else {
+    } else if (typeof value === 'string' || typeof value === 'number') {
       const index = this.params.indexOf(value)
       if (index > -1) return '$' + (index + 1)
       this.params.push(value)
       return '$' + this.params.length
     }
+
+    throw new RequestError(this.engine.request, 2540, 'ERROR_COMPRESSION_PARAMETERIZE', { message: 'arrays or objects, must use the :keyvals, :keys, or :values tool' })
   }
 
   /**
@@ -99,57 +107,27 @@ export default class Compression {
   /**
    * Array to List
    */
-  private arrayToList(array: unknown[]): string {
+  private arrayToList(array: string[], escape = false): string {
     let sql = ''
     array.forEach((val, i) => {
-      if (Array.isArray(val)) {
-        sql += (i === 0 ? '' : ', ') + '(' + this.arrayToList(val) + ')'
-      } else {
-        sql += (i === 0 ? '' : ', ') + this.parameterize(val)
-      }
+      sql += (i === 0 ? '' : ', ') + (escape ? this.escapeIdentifier(val) : this.parameterize(val))
     })
     return sql
   }
 
   /**
-   * Object to Throttle
+   * Key vals
    */
-  private objectToIdentifier({ name, alias }: IIdentifierParameter['__identifier__']): string {
-    return (alias)
-      ? `${this.escapeIdentifier(name)} as ${this.escapeIdentifier(alias)}`
-      : `${this.escapeIdentifier(name)}`
-  }
-
-  /**
-   * Object to Values
-   */
-  private objectToValues(object: Record<string, unknown>): string {
+  private keyvals(object: Record<string, unknown>): string {
     let sql = ''
     for (const key in object) {
       sql +=
         (sql.length === 0 ? '' : ', ') +
-        this.parameterize(key) +
+        this.escapeIdentifier(key) +
         ' = ' +
         this.parameterize(object[key])
     }
     return sql
-  }
-
-  /**
-   * Throttle To Identifiers
-   */
-  private throttleToIdentifiers(engineModelThrottle: IEngineModel['throttle'], value: unknown): unknown {
-    if(!engineModelThrottle) return value
-
-    let identifiers: IIdentifierParameter[] = []
-    value = Array.isArray(value) ? value : [value]
-    engineModelThrottle.forEach((throttle: string) => {
-      const [name, alias] = throttle.split(' as ') as [string, string]
-      (value as unknown[]).forEach((val: unknown) => {
-        if (val === name || val === alias) identifiers.push({ __identifier__: { name, alias } })
-      })
-    })
-    return identifiers.length === 1 ? identifiers[0] : identifiers
   }
 
   /**
@@ -161,10 +139,15 @@ export default class Compression {
     toolBox.push({
       prefix: ':',
       tools: {
-        // Throttle `select` statements
-        throttle: function (value: unknown, context: { data: { root: { model: IEngineModel } } }) {
-          return $this.throttleToIdentifiers(context.data.root.model.throttle, value)
-        }
+        keyvals: function (value: unknown) {
+          return { value, __tool__: 'keyvals' }
+        },
+        keys: function (value: unknown) {
+          return { value, __tool__: 'keys' }
+        },
+        values: function (value: unknown) {
+          return { value, __tool__: 'values' }
+        },
       },
     })
 

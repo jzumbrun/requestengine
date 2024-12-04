@@ -43,7 +43,7 @@ describe('RequestEngine', () => {
     it(':operators:update', done => {
       start([{
           model: ':operators:update',
-          compression: 'UPDATE operators SET {{i.operator}} WHERE id = {{o.id}}',
+          compression: 'UPDATE operators SET {{:keyvals i.operator}} WHERE id = {{o.id}}',
           intake: { type: 'object', properties: { operator: { type: 'object' } } },
           exhaust: { type: 'array' },
           ignition: ['operator']
@@ -67,9 +67,7 @@ describe('RequestEngine', () => {
           res
         )
         .then(() => {
-          expect(res.data.requests[0].results).toEqual(
-            ['UPDATE operators SET $1 = $2, $3 = $4 WHERE id = $5', ['name', 'Jon', 'age', 33, 123]]
-          )
+          expect(res.data.requests[0].results).toEqual(['UPDATE operators SET "name" = $1, "age" = $2 WHERE id = $3', ['Jon', 33, 123]])
           done()
         })
         .catch(error => {
@@ -134,10 +132,10 @@ describe('RequestEngine', () => {
         )
         .then(() => {
           expect(res.data.requests).toEqual([
-            {"engine": "long", "results": "200", "serial": "1"},
-            {"engine": "immediate", "results": "0", "serial": "4"}, 
-            {"engine": "long", "results": "200", "serial": "2"},
-            {"engine": "short", "results": "100", "serial": "3"}
+            {'engine': 'long', 'results': '200', 'serial': '1'},
+            {'engine': 'immediate', 'results': '0', 'serial': '4'}, 
+            {'engine': 'long', 'results': '200', 'serial': '2'},
+            {'engine': 'short', 'results': '100', 'serial': '3'}
           ])
           done()
         })
@@ -193,7 +191,7 @@ describe('RequestEngine', () => {
             {
               serial: 'two',
               engine: 'thing:two',
-              results: ["thing:two is bigger than $1", ['thing:one']]
+              results: ['thing:two is bigger than $1', ['thing:one']]
             }
           ])
           done()
@@ -237,7 +235,7 @@ describe('RequestEngine', () => {
             {
               serial: '1',
               engine: 'thing:one',
-              results: ["thing:one $1", ['nospaces']]
+              results: ['thing:one $1', ['nospaces']]
             }
           ])
           done()
@@ -290,48 +288,6 @@ describe('RequestEngine', () => {
             results: [
               'UPDATE operators SET $1 = $2, $3 = $4,',
               ['column1', 3, 'column2', 'hello']
-            ]
-          }
-        ])
-        done()
-      })
-      .catch(error => {
-        done(error)
-      })
-    })
-
-    it('throttle with alias', done => {
-      start([
-        {
-          model: 'alias',
-          throttle: ['first_name as firstName', 'last_name as lastName'],
-          intake: { type: 'object', properties: { firstName: { type: 'string' }, select: { type: 'array', items: {
-            enum: ['firstName', 'lastName']
-          } } } },
-          exhaust: { type: 'array' },
-          compression: 'SELECT {{:throttle i.select}} from operators where firstName = {{i.firstName}}',
-          ignition: ['operator']
-        }
-      ]).run([
-        {
-          engine: 'alias',
-          fuel: {
-            firstName: 'Abe',
-            select: ['lastName'],
-          }
-        }
-      ], {
-            id: 123,
-            keys: ['operator']
-          },
-      )
-      .then(({ requests }) => {
-        expect(requests).toEqual([
-          {
-            engine: 'alias',
-            results: [
-              'SELECT "last_name" as "lastName" from operators where firstName = $1',
-              ['Abe']
             ]
           }
         ])
@@ -621,6 +577,48 @@ describe('RequestEngine', () => {
       .then(({ requests }) => {
         expect(requests.length).toEqual(1)
         expect(requests[0].error.code).toEqual('ERROR_REQUEST_ENGINE_MODEL_NOT_FOUND')
+        done()
+      })
+      .catch(error => {
+        done(error)
+      })
+    })
+
+    it('compression uses object', done => {
+      start([
+        {
+          model: 'object:engine',
+          intake: { 
+            type: 'object',
+            properties: {
+              operator: { type: 'object', 
+                properties: {
+                  firstName: { type: 'string' },
+                  lastName: { type: 'string' },
+                },
+                additionalProperties: false
+              }
+            },
+            additionalProperties: false
+          },
+          exhaust: { type: 'array' },
+          compression: 'INSERT INTO operators ({{:keys i.operator}}) VALUES({{:values i.operator}})',
+          ignition: ['operator']
+        }
+      ]).run([
+        {
+          engine: 'object:engine',
+          fuel: { 
+            operator: { firstName: 'Abe', lastName: 'Lincoln' },
+           }
+        }
+      ], {
+            id: 123,
+            keys: ['operator']
+          },
+      )
+      .then(({ requests }) => {
+        expect(requests).toEqual([{'engine': 'object:engine', 'results': ['INSERT INTO operators (\"firstName\", \"lastName\") VALUES($1, $2)', ['Abe', 'Lincoln']]}])
         done()
       })
       .catch(error => {

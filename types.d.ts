@@ -12,6 +12,7 @@ export interface IGarage {
 
 export interface IPowerSystems {
   compressionStroke: typeof Compression['compressionStroke']
+  compressionFirstStroke: typeof Compression['compressionFirstStroke']
   engineCycle: typeof Engine['engineCycle']
 }
 
@@ -27,7 +28,7 @@ export interface IEngineModel {
   exhaust: AnySchema
   compression?: string
   power?: (engine: Engine, { compressionStroke, engineCycle }: IPowerSystems ) => any
-  throttle?: string[]
+  limiter?: Record<string, string[]>
 }
 
 export interface IRevolution {

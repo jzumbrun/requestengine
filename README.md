@@ -65,7 +65,28 @@ app.post('/requests', requestengine.middleware())
 Each engine is given a model, an compression statement, a keys list, and an intake schema.
 
 - model!: string; Model should reflect the resource and action, like "notes.update". This is only a convention. But it must be unique.   
-- compression?: string; The `compression` property is a simple SQL statement managed by handlebars. Handlebars will take care of sql injections using postgres parameterization. Any value within {{}} will be evaluated, and postgres escaped by handlebars. Available handlebar helper functions need to be supplied to `kickStart()` function.   
+- compression?: string; The `compression` property is a simple SQL statement managed by handlebars. Handlebars will take care of sql injections using postgres parameterization. Any value within {{}} will be evaluated, and postgres escaped by handlebars. Objects and arrays can be used within {{}} however they must use one of the following handlebar helper functions (aka tools): 
+    
+    `intake.person` -> `{ lastName: 'Able', lastName: 'Lincoln', age: 215}`
+    * `:keys` type(array or object) will list escaped array values and object keys.   
+    Ex: `{{:keys intake.person}}` -> `"firstName", "lastName", "age"`
+    * `:values` type(array or object) will list array values and object values.   
+    Ex: `{{:values intake.person}}` -> `$1, $2, $3`
+    * `:keyvals` type(object) will list key value pairs with the key escaped.   
+    Ex: `{{:keyvals intake.person}}` -> `"firstName" = $1, "lastName" = $2, "age" = $3`
+
+    These tools help with queries such as:
+    * inserts   
+    `INSERT INTO persons ({{:keys intake.person}}) VALUES({{:valuesintake.person}}) ...`   
+    `INSERT INTO persons ("firstName", "lastName", "age") VALUES($1, $2, $3) ...`
+    * updates
+    `UPDATE persons SET {{:keyvals intake.person}}) ...`   
+    `UPDATE persons SET "firstName" = $1, "lastName" = $2, "age" = $3 ...`
+
+    Note: tools can be prefixed with any character, however requestengine reserves all tools prefix with `:`   
+    Warning: using the :key or :keyvals with an intake property REQUIRES the intake schema to specify the exact fields and set `additionalProperties` to false. This will ensure any rogue fields or access is denied.
+
+Available handlebar helper functions need to be supplied to `kickStart()` function.   
 The following are properties provided to the compression string:
 
     - revolution: All successfull request responses within a client request will be available to subseqent requests in the `revolution` object, if the serial property is set.
@@ -73,7 +94,7 @@ The following are properties provided to the compression string:
     - intake: All request's `fuel` values will be available within the `intake` property.
 
 All requests are run synchronous by default in the order provided. Setting the `timing` property to false, will allow for asynchronous calls, but the revolution timeline cannot be guaranteed. Since synchronous requests can depend on previous request results, if any synchronous requests fail, any subsequent synchronous will not be called. Asynchronous requests will always run reguardless of previous failures.
-- power?: (engine: Engine, { compressionStroke, engineCycle }: IPowerSystems ) => any; The `power` handler is optional and cannot be combined with the compression property. It is a handling function that allows for more flexible control over the request if more complex logic is needed that the compression statement alone, cannot provide. The `power` handler passes a compressionStroke function to allow code to make query calls along with all other data in the request pipeline. It also passes a engineCycle function to allow code to make an entirely new call to another engine.
+- power?: (engine: Engine, { compressionStroke, compressionFirstStroke, engineCycle }: IPowerSystems ) => any; The `power` handler is optional and cannot be combined with the compression property. It is a handling function that allows for more flexible control over the request if more complex logic is needed that the compression statement alone, cannot provide. The `power` handler passes a compressionStroke/compressionFirstStroke function to allow code to make query calls along with all other data in the request pipeline. It also passes a engineCycle function to allow code to make an entirely new call to another engine.
 - ignition!: string[]; The `ignition` property array is a list for authorized keys for each engine model.   
 - intake!: AnySchema; The `intake` property is an avj json schema that validates inbound data.   
 - exhaust!: AnySchema; The `exhaust` property is an avj json schema that validates outbound data.
@@ -102,15 +123,15 @@ All requests are run synchronous by default in the order provided. Setting the `
 },
 {
     "model": "notes.select.byId",
-    "compression": "SELECT {{:throttle intake.select}} FROM greetings WHERE user_id={{operator.id}} AND id={{revolution[notes.insert].id}} LIMIT {{limit}}",
+    "compression": "SELECT {{:keys intake.select}} FROM greetings WHERE user_id={{operator.id}} AND id={{revolution[notes.insert].id}} LIMIT {{limit}}",
     "ignition": ["canWrite"],
-    "throttle": ["id", "title", "body", "tag"],
     "intake": {
         "type": "object",
         "properties": {
             "select": {
-                "type": "array",
-                "default": ["*"]
+                type: "array"
+                items: { enum: ['firstName', 'lastName'] }
+                "default": ["*"],
             },
             "limit": {
                 "type": "number",

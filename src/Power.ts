@@ -14,6 +14,7 @@ export default class Power {
   public stroke (): Promise<unknown> {
     if (this.engine.model.power) {
       return this.engine.model.power(this.engine, {
+        compressionFirstStroke: Compression.compressionFirstStroke,
         compressionStroke: Compression.compressionStroke,
         engineCycle: Engine.engineCycle
       });

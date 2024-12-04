@@ -589,6 +589,38 @@ describe('RequestEngine', () => {
                 done(error);
             });
         });
+        it('compression uses object', done => {
+            start([
+                {
+                    model: 'object:engine',
+                    intake: {
+                        type: 'object',
+                        properties: {
+                            firstName: { type: 'string' },
+                            lastName: { type: 'string' }
+                        }
+                    },
+                    exhaust: { type: 'array' },
+                    compression: 'INSERT INTO operators ({{:values i.select}}) VALUES({{:values intake}})',
+                    ignition: ['operator']
+                }
+            ]).run([
+                {
+                    engine: 'object:engine',
+                    fuel: { firstName: 'Abe', lastName: 'Lincoln' }
+                }
+            ], {
+                id: 123,
+                keys: ['operator']
+            })
+                .then(({ requests }) => {
+                expect(requests).toEqual([{ engine: 'object:engine', results: ['INSERT INTO operators ("firstName", "lastName") VALUES($1 = $2, $3 = $4)', ['firstName', 'Abe', 'lastName', 'Lincoln']] }]);
+                done();
+            })
+                .catch(error => {
+                done(error);
+            });
+        });
     });
     describe('getEngineSchemas', () => {
         it('should return the correct engine schemas', () => {
