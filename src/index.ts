@@ -5,12 +5,12 @@ import type { IOperator,
 import Engine from './Engine.js'
 import Start from './Start.js'
 
-export * as Start from './Start.js'
-export * as Engine from './Engine.js'
-export * as Intake from './Intake.js'
-export * as Compression from './Compression.js'
-export * as Power from './Power.js'
-export * as Exhaust from './Exhaust.js'
+export { default as Start } from './Start.js'
+export { default as Engine } from './Engine.js'
+export { default as Intake } from './Intake.js'
+export { default as Compression } from './Compression.js'
+export { default as Power } from './Power.js'
+export { default as Exhaust } from './Exhaust.js'
 export * from './errors/index.js'
 export type * from '../types.d.ts'
 

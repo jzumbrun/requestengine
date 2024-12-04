@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals'
-import  { IEngineModel, kickStart } from '../index.js'
+import  { IEngineModel, kickStart, Engine } from '../index.js'
 
 const queryStatement = (compression: string, data: unknown) => {
   return new Promise((resolve) => {
