@@ -1,4 +1,4 @@
-import Engine from './Engine.js';
+import type Engine from './Engine.js';
 /**
  * Compression
  */
