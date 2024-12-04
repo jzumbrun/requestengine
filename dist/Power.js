@@ -10,6 +10,7 @@ export default class Power {
     stroke() {
         if (this.engine.model.power) {
             return this.engine.model.power(this.engine, {
+                compressionFirstStroke: Compression.compressionFirstStroke,
                 compressionStroke: Compression.compressionStroke,
                 engineCycle: Engine.engineCycle
             });

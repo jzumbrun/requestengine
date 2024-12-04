@@ -35,9 +35,9 @@ export default class Compression {
      */
     private arrayToList;
     /**
-     * Object Set
+     * Key vals
      */
-    private objectSet;
+    private keyvals;
     /**
      * Register Tools
      */

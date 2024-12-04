@@ -76,13 +76,6 @@ export default class Start {
                     type: 'string',
                     default: 'ERROR_MISSING_MODEL'
                 },
-                throttle: {
-                    items: {
-                        type: 'string',
-                    },
-                    type: 'array',
-                    default: []
-                },
                 intake: {
                     type: 'object',
                     default: {}

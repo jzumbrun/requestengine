@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 // Import necessary modules
 import Handlebars from 'handlebars';
+import { RequestError } from './errors/index.js';
 /**
  * Compression
  */
@@ -64,11 +65,34 @@ export default class Compression {
      * Parameterize
      */
     parameterize(value) {
-        const index = this.params.indexOf(value);
-        if (index > -1)
-            return '$' + (index + 1);
-        this.params.push(value);
-        return '$' + this.params.length;
+        if (typeof value === 'object' && value.__tool__) {
+            switch (value.__tool__) {
+                case 'keyvals':
+                    if (typeof value.value !== 'object')
+                        throw new RequestError(this.engine.request, 2510, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':keyvals must be an object' });
+                    return this.keyvals(value.value);
+                case 'keys':
+                    if (typeof value.value !== 'object')
+                        throw new RequestError(this.engine.request, 2520, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':keys must be an array or object' });
+                    return Array.isArray(value.value)
+                        ? this.arrayToList(value.value, true)
+                        : this.arrayToList(Object.keys(value.value), true);
+                case 'values':
+                    if (typeof value.value !== 'object')
+                        throw new RequestError(this.engine.request, 2530, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':values must be an array or object' });
+                    return Array.isArray(value.value)
+                        ? this.arrayToList(value.value)
+                        : this.arrayToList(Object.values(value.value));
+            }
+        }
+        else if (typeof value === 'string' || typeof value === 'number') {
+            const index = this.params.indexOf(value);
+            if (index > -1)
+                return '$' + (index + 1);
+            this.params.push(value);
+            return '$' + this.params.length;
+        }
+        throw new RequestError(this.engine.request, 2540, 'ERROR_COMPRESSION_PARAMETERIZE', { message: 'arrays or objects, must use the :keyvals, :keys, or :values tool' });
     }
     /**
      * Unregister Escape Expression
@@ -87,9 +111,9 @@ export default class Compression {
         return sql;
     }
     /**
-     * Object Set
+     * Key vals
      */
-    objectSet(object) {
+    keyvals(object) {
         let sql = '';
         for (const key in object) {
             sql +=
@@ -110,18 +134,14 @@ export default class Compression {
         toolBox.push({
             prefix: ':',
             tools: {
-                set: function (value) {
-                    return $this.objectSet(value);
+                keyvals: function (value) {
+                    return { value, __tool__: 'keyvals' };
                 },
                 keys: function (value) {
-                    if (Array.isArray(value))
-                        return $this.arrayToList(value, true);
-                    return $this.arrayToList(Object.keys(value), true);
+                    return { value, __tool__: 'keys' };
                 },
                 values: function (value) {
-                    if (Array.isArray(value))
-                        return $this.arrayToList(value);
-                    return $this.arrayToList(Object.values(value));
+                    return { value, __tool__: 'values' };
                 },
             },
         });
