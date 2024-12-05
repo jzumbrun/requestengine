@@ -1,4 +1,4 @@
-import type { IRequest } from '../../types.d.ts';
+import type { IRequest } from '.././types.d.ts';
 import EngineError from './EngineError.js';
 export default class RequestError extends EngineError {
     request: IRequest;

@@ -2,7 +2,7 @@ import { Ajv } from 'ajv'
 import ajvKeywords from 'ajv-keywords'
 import Engine from './Engine.js'
 import { getRequestEngine } from './toolChest.js'
-import { IResult } from '../types.js'
+import { IResult } from './types.js'
 import RequestError from './errors/RequestError.js'
 
 /**

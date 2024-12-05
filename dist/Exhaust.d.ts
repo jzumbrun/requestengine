@@ -1,5 +1,5 @@
 import Engine from './Engine.js';
-import { IResult } from '../types.js';
+import { IResult } from './types.js';
 /**
  * Exhaust
  */

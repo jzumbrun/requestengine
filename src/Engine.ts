@@ -1,4 +1,4 @@
-import type { IGarage, IGear, IEngineModel, IRevolution, IRequest, IResult, IOperator, IIntakeValves } from '../types.js'
+import type { IGarage, IGear, IEngineModel, IRevolution, IRequest, IResult, IOperator, IIntakeValves } from './types.js'
 import Intake from './Intake.js'
 import Compression from './Compression.js'
 import Power from './Power.js'

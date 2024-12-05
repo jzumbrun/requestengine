@@ -1,4 +1,4 @@
-import type { IRequest } from '../types.js'
+import type { IRequest } from './types.js'
 
 /**
  * Get Request Engine

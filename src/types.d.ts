@@ -1,7 +1,7 @@
 import type { AnySchema } from 'ajv'
-import type Compression from './src/Compression.js'
-import type Engine from './src/Engine.ts'
-import type { EngineError } from './src/errors/index.js'
+import type Compression from './Compression.js'
+import type Engine from './Engine.ts'
+import type { EngineError } from './errors/index.js'
 
 
 export interface IGarage {

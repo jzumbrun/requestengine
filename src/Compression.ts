@@ -1,6 +1,6 @@
 import Handlebars, { Utils } from 'handlebars'
 import { RequestError } from './errors/index.js'
-import type { IToolBox } from '../types.d.js'
+import type { IToolBox } from './types.d.js'
 import type Engine from './Engine.js'
 
 

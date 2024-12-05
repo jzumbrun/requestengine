@@ -1,7 +1,7 @@
 import type { IOperator, 
   IRevolution, IRequest, IResponse, IHTTPRequest, IHTTPResponse, 
   IEngineModel, IResult,
-  IGarage, IGear} from '../types.d.js'
+  IGarage, IGear} from './types.d.js'
 import Engine from './Engine.js'
 import Start from './Start.js'
 
@@ -12,7 +12,7 @@ export { default as Compression } from './Compression.js'
 export { default as Power } from './Power.js'
 export { default as Exhaust } from './Exhaust.js'
 export * from './errors/index.js'
-export type * from '../types.d.ts'
+export type * from './types.d.ts'
 
 export default class RequestEngine {
   readonly garage: IGarage

@@ -1,4 +1,4 @@
-import type { IGarage, IGear, IEngineModel, IRevolution, IRequest, IResult, IOperator, IIntakeValves } from '../types.js';
+import type { IGarage, IGear, IEngineModel, IRevolution, IRequest, IResult, IOperator, IIntakeValves } from './types.js';
 /**
  * Engine
  */
