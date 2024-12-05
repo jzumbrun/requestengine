@@ -1,6 +1,6 @@
 import type { AnySchema } from 'ajv'
 import type Compression from './Compression.js'
-import type Engine from './Engine.ts'
+import type Engine from './Engine.js'
 import type { EngineError } from './errors/index.js'
 
 

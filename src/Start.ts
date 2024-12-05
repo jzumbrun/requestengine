@@ -1,6 +1,6 @@
 import { Ajv } from 'ajv'
 import ajvKeywords from 'ajv-keywords'
-import { IGarage, IGear, IEngineModel } from './types.d.js'
+import { IGarage, IGear, IEngineModel } from './types.js'
 import EngineError from './errors/EngineError.js'
 
 /**

@@ -1,4 +1,4 @@
-import { IGarage, IGear } from './types.d.js';
+import { IGarage, IGear } from './types.js';
 /**
  * Start
  */
