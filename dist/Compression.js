@@ -66,19 +66,19 @@ export default class Compression {
     parameterize(value) {
         if (typeof value === 'object' && value.__tool__) {
             switch (value.__tool__) {
-                case 'keyvals':
+                case 'colvals':
                     if (typeof value.value !== 'object')
-                        throw new RequestError(this.engine.request, 2510, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':keyvals must be an object' });
-                    return this.keyvals(value.value);
-                case 'keys':
+                        throw new RequestError(this.engine.request, 2510, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':colvals must be an object' });
+                    return this.colvals(value.value);
+                case 'cols':
                     if (typeof value.value !== 'object')
-                        throw new RequestError(this.engine.request, 2520, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':keys must be an array or object' });
+                        throw new RequestError(this.engine.request, 2520, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':cols must be an array or object' });
                     return Array.isArray(value.value)
                         ? this.arrayToList(value.value, true)
                         : this.arrayToList(Object.keys(value.value), true);
-                case 'values':
+                case 'vals':
                     if (typeof value.value !== 'object')
-                        throw new RequestError(this.engine.request, 2530, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':values must be an array or object' });
+                        throw new RequestError(this.engine.request, 2530, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':vals must be an array or object' });
                     return Array.isArray(value.value)
                         ? this.arrayToList(value.value)
                         : this.arrayToList(Object.values(value.value));
@@ -110,9 +110,9 @@ export default class Compression {
         return sql;
     }
     /**
-     * Key vals
+     * Colum values
      */
-    keyvals(object) {
+    colvals(object) {
         let sql = '';
         for (const key in object) {
             sql +=
@@ -133,14 +133,14 @@ export default class Compression {
         toolBox.push({
             prefix: ':',
             tools: {
-                keyvals: function (value) {
-                    return { value, __tool__: 'keyvals' };
+                colvals: function (value) {
+                    return { value, __tool__: 'colvals' };
                 },
-                keys: function (value) {
-                    return { value, __tool__: 'keys' };
+                cols: function (value) {
+                    return { value, __tool__: 'cols' };
                 },
-                values: function (value) {
-                    return { value, __tool__: 'values' };
+                vals: function (value) {
+                    return { value, __tool__: 'vals' };
                 },
             },
         });

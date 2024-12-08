@@ -49,7 +49,7 @@ describe('RequestEngine', () => {
         it(':operators:update', done => {
             start([{
                     model: ':operators:update',
-                    compression: 'UPDATE operators SET {{:keyvals i.operator}} WHERE id = {{o.id}}',
+                    compression: 'UPDATE operators SET {{:colvals i.operator}} WHERE id = {{o.id}}',
                     intake: { type: 'object', properties: { operator: { type: 'object' } } },
                     exhaust: { type: 'array' },
                     ignition: ['operator']
@@ -567,7 +567,7 @@ describe('RequestEngine', () => {
                         additionalProperties: false
                     },
                     exhaust: { type: 'array' },
-                    compression: 'INSERT INTO operators ({{:keys i.operator}}) VALUES({{:values i.operator}})',
+                    compression: 'INSERT INTO operators ({{:cols i.operator}}) VALUES({{:vals i.operator}})',
                     ignition: ['operator']
                 }
             ]).run([
