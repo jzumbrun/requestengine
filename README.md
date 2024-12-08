@@ -67,13 +67,16 @@ Each engine is given a model, an compression statement, a keys list, and an inta
 - model!: string; Model should reflect the resource and action, like "notes.update". This is only a convention. But it must be unique.   
 - compression?: string; The `compression` property is a simple SQL statement managed by handlebars. Handlebars will take care of sql injections using postgres parameterization. Any value within {{}} will be evaluated, and postgres escaped by handlebars. Objects and arrays can be used within {{}} however they must use one of the following handlebar helper functions (aka tools): 
     
-    `intake.person` -> `{ lastName: 'Able', lastName: 'Lincoln', age: 215}`
-    * `:keys` type(array or object) will list escaped array values and object keys.   
-    Ex: `{{:keys intake.person}}` -> `"firstName", "lastName", "age"`
-    * `:values` type(array or object) will list array values and object values.   
-    Ex: `{{:values intake.person}}` -> `$1, $2, $3`
-    * `:keyvals` type(object) will list key value pairs with the key escaped.   
-    Ex: `{{:keyvals intake.person}}` -> `"firstName" = $1, "lastName" = $2, "age" = $3`
+    Ex object: `intake.person` -> `{ lastName: 'Able', lastName: 'Lincoln', age: 215}`   
+    Ex array: `intake.jobs` -> `['engineer', 'plummer', 'doctor']`   
+    * `:cols` type(array or object) will list escaped array values or object keys.   
+        * Ex: `{{:cols intake.person}}` -> `"firstName", "lastName", "age"`
+        * Ex: `{{:cols intake.jobs}}` -> `"engineer", "plummer", "doctor"`
+    * `:vals` type(array or object) will list array values and object values.   
+        * Ex: `{{:vals intake.person}}` -> `$1, $2, $3`
+        * Ex: `{{:vals intake.jobs}}` -> `$1, $2, $3`
+    * `:colvals` type(object) will list key value pairs with the key escaped.   
+        * Ex: `{{:colvals intake.person}}` -> `"firstName" = $1, "lastName" = $2, "age" = $3`
 
     These tools help with queries such as:
     * inserts   
