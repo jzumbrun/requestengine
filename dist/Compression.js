@@ -1,12 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import Handlebars from 'handlebars';
 import { RequestError } from './errors/index.js';
 /**
@@ -28,12 +19,6 @@ export default class Compression {
         engine.model.compression = query;
         const compression = new Compression(engine);
         return compression.stroke();
-    }
-    static compressionFirstStroke(query, engine) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield Compression.compressionStroke(query, engine);
-            return Array.isArray(response) ? response[0] : response;
-        });
     }
     getParams() {
         return this.params;
@@ -84,18 +69,11 @@ export default class Compression {
                         : this.arrayToList(Object.values(value.value));
             }
         }
-        else if (typeof value === 'string' ||
-            typeof value === 'number' ||
-            Array.isArray(value)) {
-            const index = this.params.indexOf(value);
-            if (index > -1)
-                return '$' + (index + 1);
-            this.params.push(value);
-            return '$' + this.params.length;
-        }
-        throw new RequestError(this.engine.request, 2540, 'ERROR_COMPRESSION_PARAMETERIZE', {
-            message: 'objects, must use the :colvals, :cols, or :vals tool',
-        });
+        const index = this.params.indexOf(value);
+        if (index > -1)
+            return '$' + (index + 1);
+        this.params.push(value);
+        return '$' + this.params.length;
     }
     /**
      * Unregister Escape Expression

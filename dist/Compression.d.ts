@@ -10,7 +10,6 @@ export default class Compression {
     constructor(engine: Engine);
     stroke<T>(): Promise<T>;
     static compressionStroke<T>(query: string, engine: Engine): Promise<T[]>;
-    static compressionFirstStroke<T>(query: string, engine: Engine): Promise<T>;
     private getParams;
     private escapeIdentifier;
     /**

@@ -34,14 +34,6 @@ export default class Compression {
     return compression.stroke<T[]>()
   }
 
-  public static async compressionFirstStroke<T>(
-    query: string,
-    engine: Engine
-  ): Promise<T> {
-    const response = await Compression.compressionStroke<T>(query, engine)
-    return Array.isArray(response) ? response[0] : response
-  }
-
   private getParams(): unknown[] {
     return this.params
   }
@@ -111,25 +103,11 @@ export default class Compression {
             ? this.arrayToList(value.value)
             : this.arrayToList(Object.values(value.value))
       }
-    } else if (
-      typeof value === 'string' ||
-      typeof value === 'number' ||
-      Array.isArray(value)
-    ) {
-      const index = this.params.indexOf(value)
-      if (index > -1) return '$' + (index + 1)
-      this.params.push(value)
-      return '$' + this.params.length
     }
-
-    throw new RequestError(
-      this.engine.request,
-      2540,
-      'ERROR_COMPRESSION_PARAMETERIZE',
-      {
-        message: 'objects, must use the :colvals, :cols, or :vals tool',
-      }
-    )
+    const index = this.params.indexOf(value)
+    if (index > -1) return '$' + (index + 1)
+    this.params.push(value)
+    return '$' + this.params.length
   }
 
   /**

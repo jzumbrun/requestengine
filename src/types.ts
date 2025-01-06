@@ -3,7 +3,6 @@ import type Compression from './Compression.js'
 import type Engine from './Engine.js'
 import type { EngineError } from './errors/index.js'
 
-
 export interface IGarage {
   engines: IEngineModel[]
   env?: string
@@ -11,9 +10,8 @@ export interface IGarage {
 }
 
 export interface IPowerSystems {
-  compressionStroke: typeof Compression['compressionStroke']
-  compressionFirstStroke: typeof Compression['compressionFirstStroke']
-  engineCycle: typeof Engine['engineCycle']
+  compressionStroke: (typeof Compression)['compressionStroke']
+  engineCycle: (typeof Engine)['engineCycle']
 }
 
 export interface IGear {
@@ -27,7 +25,10 @@ export interface IEngineModel {
   intake: AnySchema
   exhaust: AnySchema
   compression?: string
-  power?: (engine: Engine, { compressionStroke, engineCycle }: IPowerSystems ) => any
+  power?: (
+    engine: Engine,
+    { compressionStroke, engineCycle }: IPowerSystems
+  ) => any
   limiter?: Record<string, string[]>
 }
 
@@ -64,7 +65,7 @@ export interface IResult {
   serial?: string
   engine: string
   results?: unknown
-  error? : EngineError
+  error?: EngineError
 }
 
 export interface IToolBox {

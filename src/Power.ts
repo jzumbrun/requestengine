@@ -11,16 +11,14 @@ export default class Power {
     this.engine = engine
   }
 
-  public stroke (): Promise<unknown> {
+  public stroke(): Promise<unknown> {
     if (this.engine.model.power) {
       return this.engine.model.power(this.engine, {
-        compressionFirstStroke: Compression.compressionFirstStroke,
         compressionStroke: Compression.compressionStroke,
-        engineCycle: Engine.engineCycle
-      });
+        engineCycle: Engine.engineCycle,
+      })
     } else {
-      return Promise.resolve();
+      return Promise.resolve()
     }
   }
-  
 }

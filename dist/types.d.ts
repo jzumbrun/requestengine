@@ -8,9 +8,8 @@ export interface IGarage {
     toolbox?: IToolBox[];
 }
 export interface IPowerSystems {
-    compressionStroke: typeof Compression['compressionStroke'];
-    compressionFirstStroke: typeof Compression['compressionFirstStroke'];
-    engineCycle: typeof Engine['engineCycle'];
+    compressionStroke: (typeof Compression)['compressionStroke'];
+    engineCycle: (typeof Engine)['engineCycle'];
 }
 export interface IGear {
     neutral?: (...args: any[]) => any;

@@ -29,14 +29,15 @@ function start(engines) {
                 tools: {
                     trim: (str) => str.trim(),
                     eq: (a, b) => a === b,
-                    isString: (str) => typeof str === 'string'
+                    isString: (str) => typeof str === 'string',
                 },
-                prefix: '_', context: false
-            }
-        ]
+                prefix: '_',
+                context: false,
+            },
+        ],
     }, {
         neutral: () => null,
-        drive: queryStatement
+        drive: queryStatement,
     });
 }
 describe('RequestEngine', () => {
@@ -44,66 +45,76 @@ describe('RequestEngine', () => {
         const res = {
             send: (response) => {
                 res.data = response;
-            }
+            },
         };
-        it(':operators:update', done => {
-            start([{
+        it(':operators:update', (done) => {
+            start([
+                {
                     model: ':operators:update',
                     compression: 'UPDATE operators SET {{:colvals i.operator}} WHERE id = {{o.id}}',
-                    intake: { type: 'object', properties: { operator: { type: 'object' } } },
+                    intake: {
+                        type: 'object',
+                        properties: { operator: { type: 'object' } },
+                    },
                     exhaust: { type: 'array' },
-                    ignition: ['operator']
-                }]).middleware()({
+                    ignition: ['operator'],
+                },
+            ])
+                .middleware()({
                 operator: {
                     id: 123,
-                    keys: ['operator']
+                    keys: ['operator'],
                 },
                 body: {
                     requests: [
                         {
                             engine: ':operators:update',
                             fuel: {
-                                operator: { name: 'Jon', age: 33 }
-                            }
-                        }
-                    ]
-                }
+                                operator: { name: 'Jon', age: 33 },
+                            },
+                        },
+                    ],
+                },
             }, res)
                 .then(() => {
-                expect(res.data.requests[0].results).toEqual(['UPDATE operators SET "name" = $1, "age" = $2 WHERE id = $3', ['Jon', 33, 123]]);
+                expect(res.data.requests[0].results).toEqual([
+                    'UPDATE operators SET "name" = $1, "age" = $2 WHERE id = $3',
+                    ['Jon', 33, 123],
+                ]);
                 done();
             })
-                .catch(error => {
+                .catch((error) => {
                 done(error);
             });
         });
-        it('sync', done => {
+        it('sync', (done) => {
             start([
                 {
                     model: 'immediate',
                     compression: '0',
                     intake: { type: 'null' },
                     exhaust: { type: 'string' },
-                    ignition: ['operator']
+                    ignition: ['operator'],
                 },
                 {
                     model: 'short',
                     compression: '100',
                     intake: { type: 'null' },
                     exhaust: { type: 'string' },
-                    ignition: ['operator']
+                    ignition: ['operator'],
                 },
                 {
                     model: 'long',
                     compression: '200',
                     intake: { type: 'null' },
                     exhaust: { type: 'string' },
-                    ignition: ['operator']
-                }
-            ]).middleware()({
+                    ignition: ['operator'],
+                },
+            ])
+                .middleware()({
                 operator: {
                     id: 123,
-                    keys: ['operator']
+                    keys: ['operator'],
                 },
                 body: {
                     requests: [
@@ -114,99 +125,104 @@ describe('RequestEngine', () => {
                         {
                             serial: '2',
                             engine: 'long',
-                            timing: false
+                            timing: false,
                         },
                         {
                             serial: '3',
                             engine: 'short',
-                            timing: false
+                            timing: false,
                         },
                         {
                             serial: '4',
                             engine: 'immediate',
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             }, res)
                 .then(() => {
                 expect(res.data.requests).toEqual([
-                    { 'engine': 'long', 'results': '200', 'serial': '1' },
-                    { 'engine': 'immediate', 'results': '0', 'serial': '4' },
-                    { 'engine': 'long', 'results': '200', 'serial': '2' },
-                    { 'engine': 'short', 'results': '100', 'serial': '3' }
+                    { engine: 'long', results: '200', serial: '1' },
+                    { engine: 'immediate', results: '0', serial: '4' },
+                    { engine: 'long', results: '200', serial: '2' },
+                    { engine: 'short', results: '100', serial: '3' },
                 ]);
                 done();
             })
-                .catch(error => {
+                .catch((error) => {
                 done(error);
             });
         });
-        it('previous query results', done => {
+        it('previous query results', (done) => {
             start([
                 {
                     model: 'thing:one',
                     compression: 'thing:one',
                     intake: { type: 'null' },
                     exhaust: { type: 'array' },
-                    ignition: ['operator']
+                    ignition: ['operator'],
                 },
                 {
                     model: 'thing:two',
                     compression: 'thing:two is bigger than {{r.one.[0]}}',
                     intake: { type: 'null' },
                     exhaust: { type: 'array' },
-                    ignition: ['operator']
-                }
-            ]).middleware()({
+                    ignition: ['operator'],
+                },
+            ])
+                .middleware()({
                 operator: {
                     id: 123,
-                    keys: ['operator']
+                    keys: ['operator'],
                 },
                 body: {
                     requests: [
                         {
                             serial: 'one',
-                            engine: 'thing:one'
+                            engine: 'thing:one',
                         },
                         {
                             serial: 'two',
-                            engine: 'thing:two'
-                        }
-                    ]
-                }
+                            engine: 'thing:two',
+                        },
+                    ],
+                },
             }, res)
                 .then(() => {
                 expect(res.data.requests).toEqual([
                     {
                         serial: 'one',
                         engine: 'thing:one',
-                        results: ['thing:one', []]
+                        results: ['thing:one', []],
                     },
                     {
                         serial: 'two',
                         engine: 'thing:two',
-                        results: ['thing:two is bigger than $1', ['thing:one']]
-                    }
+                        results: ['thing:two is bigger than $1', ['thing:one']],
+                    },
                 ]);
                 done();
             })
-                .catch(error => {
+                .catch((error) => {
                 done(error);
             });
         });
-        it('registered tools', done => {
+        it('registered tools', (done) => {
             start([
                 {
                     model: 'thing:one',
                     compression: 'thing:one {{_trim i.trimspace}}',
-                    intake: { type: 'object', properties: { trimspace: { type: 'string' } } },
+                    intake: {
+                        type: 'object',
+                        properties: { trimspace: { type: 'string' } },
+                    },
                     exhaust: { type: 'array' },
-                    ignition: ['operator']
-                }
-            ]).middleware()({
+                    ignition: ['operator'],
+                },
+            ])
+                .middleware()({
                 operator: {
                     id: 123,
-                    keys: ['operator']
+                    keys: ['operator'],
                 },
                 body: {
                     requests: [
@@ -214,60 +230,65 @@ describe('RequestEngine', () => {
                             serial: '1',
                             engine: 'thing:one',
                             fuel: {
-                                trimspace: '  nospaces   '
-                            }
-                        }
-                    ]
-                }
+                                trimspace: '  nospaces   ',
+                            },
+                        },
+                    ],
+                },
             }, res)
                 .then(() => {
                 expect(res.data.requests).toEqual([
                     {
                         serial: '1',
                         engine: 'thing:one',
-                        results: ['thing:one $1', ['nospaces']]
-                    }
+                        results: ['thing:one $1', ['nospaces']],
+                    },
                 ]);
                 done();
             })
-                .catch(error => {
+                .catch((error) => {
                 done(error);
             });
         });
     });
     describe('run', () => {
-        it('nested tools', done => {
+        it('nested tools', (done) => {
             start([
                 {
                     model: 'nested',
                     compression: [
                         'UPDATE operators SET ',
-                        '{{#_trim ', '}}',
+                        '{{#_trim ',
+                        '}}',
                         '{{#each intake.fields}}',
                         "{{#unless (_eq @key 'id')}}",
                         '{{@key}} = {{#if (_isString this)}}{{_trim this}}, {{else}}{{this}}, {{/if}}',
                         '{{/unless}}',
                         '{{/each}}',
-                        '{{/_trim}}'
+                        '{{/_trim}}',
                     ].join(''),
-                    intake: { type: 'object', properties: { fields: { type: 'object' } } },
+                    intake: {
+                        type: 'object',
+                        properties: { fields: { type: 'object' } },
+                    },
                     exhaust: { type: 'array' },
-                    ignition: ['operator']
-                }
-            ]).run([
+                    ignition: ['operator'],
+                },
+            ])
+                .run([
                 {
                     serial: '1',
                     engine: 'nested',
                     fuel: {
                         fields: {
                             column1: 3,
-                            column2: '  hello  '
-                        }
-                    }
-                }
+                            column2: '  hello  ',
+                        },
+                    },
+                },
             ], {
                 id: 123,
-                keys: ['operator']
+                keys: ['operator'],
             })
                 .then(({ requests }) => {
                 expect(requests).toEqual([
@@ -276,17 +297,17 @@ describe('RequestEngine', () => {
                         engine: 'nested',
                         results: [
                             'UPDATE operators SET $1 = $2, $3 = $4,',
-                            ['column1', 3, 'column2', 'hello']
-                        ]
-                    }
+                            ['column1', 3, 'column2', 'hello'],
+                        ],
+                    },
                 ]);
                 done();
             })
-                .catch(error => {
+                .catch((error) => {
                 done(error);
             });
         });
-        it('async power', done => {
+        it('async power', (done) => {
             start([
                 {
                     model: 'power',
@@ -294,29 +315,31 @@ describe('RequestEngine', () => {
                     exhaust: { type: 'number' },
                     power: () => {
                         return new Promise((resolve) => {
-                            setTimeout(() => { resolve(1); }, 0);
+                            setTimeout(() => {
+                                resolve(1);
+                            }, 0);
                         });
                     },
-                    ignition: ['operator']
-                }
+                    ignition: ['operator'],
+                },
             ])
                 .run([
                 {
-                    engine: 'power'
-                }
+                    engine: 'power',
+                },
             ], {
                 id: 123,
-                keys: ['operator']
+                keys: ['operator'],
             })
                 .then(({ requests }) => {
                 expect(requests).toEqual([{ engine: 'power', results: 1 }]);
                 done();
             })
-                .catch(error => {
+                .catch((error) => {
                 done(error);
             });
         });
-        it('async power call compressionStroke', done => {
+        it('async power call compressionStroke', (done) => {
             start([
                 {
                     model: 'power',
@@ -326,33 +349,35 @@ describe('RequestEngine', () => {
                         const result = yield compressionStroke('callCompression', engine);
                         return result;
                     }),
-                    ignition: ['operator']
-                }
+                    ignition: ['operator'],
+                },
             ])
                 .run([
                 {
-                    engine: 'power'
-                }
+                    engine: 'power',
+                },
             ], {
                 id: 123,
-                keys: ['operator']
+                keys: ['operator'],
             })
                 .then(({ requests }) => {
-                expect(requests).toEqual([{ engine: 'power', results: ['callCompression', []] }]);
+                expect(requests).toEqual([
+                    { engine: 'power', results: ['callCompression', []] },
+                ]);
                 done();
             })
-                .catch(error => {
+                .catch((error) => {
                 done(error);
             });
         });
-        it('async power call engineCycle', done => {
+        it('async power call engineCycle', (done) => {
             start([
                 {
                     model: 'another:engine',
                     intake: { type: 'null' },
                     exhaust: { type: 'array' },
                     compression: 'another:engine:compression',
-                    ignition: ['system']
+                    ignition: ['system'],
                 },
                 {
                     model: 'power',
@@ -362,26 +387,28 @@ describe('RequestEngine', () => {
                         const result = yield engineCycle({ engine: 'another:engine' }, engine.garage, engine.gear, { id: 'system', keys: ['system'] });
                         return result.results;
                     }),
-                    ignition: ['operator']
-                }
+                    ignition: ['operator'],
+                },
             ])
                 .run([
                 {
-                    engine: 'power'
-                }
+                    engine: 'power',
+                },
             ], {
                 id: 123,
-                keys: ['operator']
+                keys: ['operator'],
             })
                 .then(({ requests }) => {
-                expect(requests).toEqual([{ engine: 'power', results: ['another:engine:compression', []] }]);
+                expect(requests).toEqual([
+                    { engine: 'power', results: ['another:engine:compression', []] },
+                ]);
                 done();
             })
-                .catch(error => {
+                .catch((error) => {
                 done(error);
             });
         });
-        it('gear engines errors', done => {
+        it('gear engines errors', (done) => {
             try {
                 kickStart({ engines: false }, { drive: 'wrong' });
             }
@@ -390,7 +417,7 @@ describe('RequestEngine', () => {
                 done();
             }
         });
-        it('gear drive errors', done => {
+        it('gear drive errors', (done) => {
             try {
                 kickStart({ engines: [] }, { drive: 'wrong' });
             }
@@ -399,17 +426,22 @@ describe('RequestEngine', () => {
                 done();
             }
         });
-        it('garage engine errors', done => {
+        it('garage engine errors', (done) => {
             try {
                 kickStart({
-                    engines: [{
+                    engines: [
+                        {
                             model: 'thing:one',
                             compression: 'thing:one {{_trim intake.trimspace}}',
                             power: () => { },
-                            intake: { type: 'object', properties: { trimspace: { type: 'string' } } },
+                            intake: {
+                                type: 'object',
+                                properties: { trimspace: { type: 'string' } },
+                            },
                             exhaust: { type: 'array' },
-                            ignition: ['operator']
-                        }]
+                            ignition: ['operator'],
+                        },
+                    ],
                 }, { drive: () => { } });
             }
             catch (error) {
@@ -417,175 +449,225 @@ describe('RequestEngine', () => {
                 done();
             }
         });
-        it('request intake errors', done => {
+        it('request intake errors', (done) => {
             start([
                 {
                     model: 'wrong:intake',
                     intake: { type: 'string' },
                     exhaust: { type: 'string' },
                     compression: 'test',
-                    ignition: ['operator']
-                }
-            ]).run([
+                    ignition: ['operator'],
+                },
+            ])
+                .run([
                 {
                     engine: 'wrong:intake',
-                    fuel: { firstName: 'Abe' }
+                    fuel: { firstName: 'Abe' },
                 },
                 {
                     engine: 'wrong:intake',
-                    fuel: { firstName: 'Gabe' }
-                }
+                    fuel: { firstName: 'Gabe' },
+                },
             ], {
                 id: 123,
-                keys: ['operator']
+                keys: ['operator'],
             })
                 .then(({ requests }) => {
                 expect(requests.length).toEqual(1);
                 expect(requests[0].error.code).toEqual('ERROR_REQUEST_INTAKE_VALIDATION');
                 done();
             })
-                .catch(error => {
+                .catch((error) => {
                 done(error);
             });
         });
-        it('request wrong keys errors', done => {
+        it('request wrong keys errors', (done) => {
             start([
                 {
                     model: 'wrong:keys',
                     intake: { type: 'object' },
                     exhaust: { type: 'array' },
                     compression: 'test',
-                    ignition: ['operator']
-                }
-            ]).run([
+                    ignition: ['operator'],
+                },
+            ])
+                .run([
                 {
                     engine: 'wrong:keys',
-                    fuel: { firstName: 'Abe' }
-                }
+                    fuel: { firstName: 'Abe' },
+                },
             ], {
                 id: 123,
-                keys: ['nothing']
+                keys: ['nothing'],
             })
                 .then(({ requests }) => {
                 expect(requests.length).toEqual(1);
                 expect(requests[0].error.code).toEqual('ERROR_REQUEST_WRONG_KEYS');
                 done();
             })
-                .catch(error => {
+                .catch((error) => {
                 done(error);
             });
         });
-        it('allows empy ignition with operator', done => {
+        it('allows empy ignition with operator', (done) => {
             start([
                 {
                     model: 'empy:ignition',
                     intake: { type: 'null' },
                     exhaust: { type: 'array' },
                     compression: 'test',
-                    ignition: []
-                }
-            ]).run([
+                    ignition: [],
+                },
+            ])
+                .run([
                 {
                     engine: 'empy:ignition',
-                }
+                },
             ], {
                 id: 123,
-                keys: ['operator']
+                keys: ['operator'],
             })
                 .then(({ requests }) => {
-                expect(requests).toEqual([{ engine: 'empy:ignition', results: ['test', []] }]);
+                expect(requests).toEqual([
+                    { engine: 'empy:ignition', results: ['test', []] },
+                ]);
                 done();
             })
-                .catch(error => {
+                .catch((error) => {
                 done(error);
             });
         });
-        it('allows empy ignition with no operator', done => {
+        it('allows empy ignition with no operator', (done) => {
             start([
                 {
                     model: 'empy:ignition',
                     intake: { type: 'null' },
                     exhaust: { type: 'array' },
                     compression: 'test',
-                    ignition: []
-                }
-            ]).run([
+                    ignition: [],
+                },
+            ])
+                .run([
                 {
                     engine: 'empy:ignition',
-                }
+                },
             ])
                 .then(({ requests }) => {
-                expect(requests).toEqual([{ engine: 'empy:ignition', results: ['test', []] }]);
+                expect(requests).toEqual([
+                    { engine: 'empy:ignition', results: ['test', []] },
+                ]);
                 done();
             })
-                .catch(error => {
+                .catch((error) => {
                 done(error);
             });
         });
-        it('request wrong engine model errors', done => {
+        it('request wrong engine model errors', (done) => {
             start([
                 {
                     model: 'wrong:engine',
                     intake: { type: 'object' },
                     exhaust: { type: 'array' },
                     compression: 'test',
-                    ignition: ['operator']
-                }
-            ]).run([
+                    ignition: ['operator'],
+                },
+            ])
+                .run([
                 {
                     engine: 'wrong:wrong',
-                    fuel: { firstName: 'Abe' }
-                }
+                    fuel: { firstName: 'Abe' },
+                },
             ], {
                 id: 123,
-                keys: ['operator']
+                keys: ['operator'],
             })
                 .then(({ requests }) => {
                 expect(requests.length).toEqual(1);
                 expect(requests[0].error.code).toEqual('ERROR_REQUEST_ENGINE_MODEL_NOT_FOUND');
                 done();
             })
-                .catch(error => {
+                .catch((error) => {
                 done(error);
             });
         });
-        it('compression uses object', done => {
+        it('compression allows arrays', (done) => {
+            start([
+                {
+                    model: 'wrong:params',
+                    intake: { type: 'object' },
+                    exhaust: { type: 'array' },
+                    compression: '{{intake.names}}',
+                    ignition: ['operator'],
+                },
+            ])
+                .run([
+                {
+                    engine: 'wrong:params',
+                    fuel: { names: ['Abe'] },
+                },
+            ], {
+                id: 123,
+                keys: ['operator'],
+            })
+                .then(({ requests }) => {
+                expect(requests.length).toEqual(1);
+                expect(requests[0]).toEqual({
+                    engine: 'wrong:params',
+                    results: ['$1', [['Abe']]],
+                });
+                done();
+            })
+                .catch((error) => {
+                done(error);
+            });
+        });
+        it('compression uses object', (done) => {
             start([
                 {
                     model: 'object:engine',
                     intake: {
                         type: 'object',
                         properties: {
-                            operator: { type: 'object',
+                            operator: {
+                                type: 'object',
                                 properties: {
                                     firstName: { type: 'string' },
                                     lastName: { type: 'string' },
                                 },
-                                additionalProperties: false
-                            }
+                                additionalProperties: false,
+                            },
                         },
-                        additionalProperties: false
+                        additionalProperties: false,
                     },
                     exhaust: { type: 'array' },
                     compression: 'INSERT INTO operators ({{:cols i.operator}}) VALUES({{:vals i.operator}})',
-                    ignition: ['operator']
-                }
-            ]).run([
+                    ignition: ['operator'],
+                },
+            ])
+                .run([
                 {
                     engine: 'object:engine',
                     fuel: {
                         operator: { firstName: 'Abe', lastName: 'Lincoln' },
-                    }
-                }
+                    },
+                },
             ], {
                 id: 123,
-                keys: ['operator']
+                keys: ['operator'],
             })
                 .then(({ requests }) => {
-                expect(requests).toEqual([{ 'engine': 'object:engine', 'results': ['INSERT INTO operators (\"firstName\", \"lastName\") VALUES($1, $2)', ['Abe', 'Lincoln']] }]);
+                expect(requests).toEqual([
+                    {
+                        engine: 'object:engine',
+                        results: [
+                            'INSERT INTO operators ("firstName", "lastName") VALUES($1, $2)',
+                            ['Abe', 'Lincoln'],
+                        ],
+                    },
+                ]);
                 done();
             })
-                .catch(error => {
+                .catch((error) => {
                 done(error);
             });
         });
@@ -595,24 +677,38 @@ describe('RequestEngine', () => {
             const engines = [
                 {
                     model: 'engine1',
-                    intake: { type: 'object', properties: { field1: { type: 'string' } } },
+                    intake: {
+                        type: 'object',
+                        properties: { field1: { type: 'string' } },
+                    },
                     exhaust: { type: 'array' },
                     compression: 'test1',
-                    ignition: ['operator']
+                    ignition: ['operator'],
                 },
                 {
                     model: 'engine2',
-                    intake: { type: 'object', properties: { field2: { type: 'number' } } },
+                    intake: {
+                        type: 'object',
+                        properties: { field2: { type: 'number' } },
+                    },
                     exhaust: { type: 'array' },
                     compression: 'test2',
-                    ignition: ['operator']
-                }
+                    ignition: ['operator'],
+                },
             ];
             const engine = start(engines);
             const schemas = engine.getEngineSchemas();
             expect(schemas).toEqual([
-                { model: 'engine1', intake: engines[0].intake, exhaust: engines[0].exhaust },
-                { model: 'engine2', intake: engines[1].intake, exhaust: engines[1].exhaust }
+                {
+                    model: 'engine1',
+                    intake: engines[0].intake,
+                    exhaust: engines[0].exhaust,
+                },
+                {
+                    model: 'engine2',
+                    intake: engines[1].intake,
+                    exhaust: engines[1].exhaust,
+                },
             ]);
         });
     });
