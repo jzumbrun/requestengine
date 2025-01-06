@@ -3,13 +3,12 @@ import { RequestError } from './errors/index.js'
 import type { IToolBox } from './types.js'
 import type Engine from './Engine.js'
 
-
 /**
  * Compression
  */
 export default class Compression {
   private engine: Engine
-  private handlebars: typeof Handlebars 
+  private handlebars: typeof Handlebars
   private HTMLEscapeExpression: typeof Utils.escapeExpression
   private params: unknown[]
 
@@ -20,19 +19,25 @@ export default class Compression {
     this.params = []
   }
 
-  public stroke<T> (): Promise<T> {
+  public stroke<T>(): Promise<T> {
     this.registerToolBox(this.engine.garage.toolbox)
     const compiled = this.compile()
     return this.engine.gear.drive!(compiled, this.getParams())
   }
 
-  public static compressionStroke<T> (query: string, engine: Engine): Promise<T[]> {
+  public static compressionStroke<T>(
+    query: string,
+    engine: Engine
+  ): Promise<T[]> {
     engine.model.compression = query
     const compression = new Compression(engine)
-    return compression.stroke<T[]>() 
+    return compression.stroke<T[]>()
   }
 
-  public static async compressionFirstStroke<T> (query: string, engine: Engine): Promise<T> {
+  public static async compressionFirstStroke<T>(
+    query: string,
+    engine: Engine
+  ): Promise<T> {
     const response = await Compression.compressionStroke<T>(query, engine)
     return Array.isArray(response) ? response[0] : response
   }
@@ -41,7 +46,7 @@ export default class Compression {
     return this.params
   }
 
-  private escapeIdentifier (str: string): string {
+  private escapeIdentifier(str: string): string {
     return '"' + str.replace(/"/g, '""') + '"'
   }
 
@@ -52,7 +57,9 @@ export default class Compression {
   private compile(): string {
     this.params = []
     this.registerEscapeExpression()
-    const compiled = this.handlebars.compile(this.engine.model.compression)(this.engine.intakeValves)
+    const compiled = this.handlebars.compile(this.engine.model.compression)(
+      this.engine.intakeValves
+    )
     this.unRegisterEscapeExpression()
     return compiled
   }
@@ -70,30 +77,59 @@ export default class Compression {
    * Parameterize
    */
   private parameterize(value: any): string {
-    if(typeof value === 'object' && value.__tool__) {
-      switch(value.__tool__) {
+    if (typeof value === 'object' && value.__tool__) {
+      switch (value.__tool__) {
         case 'colvals':
-          if(typeof value.value !== 'object') throw new RequestError(this.engine.request, 2510, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':colvals must be an object' })
+          if (typeof value.value !== 'object')
+            throw new RequestError(
+              this.engine.request,
+              2510,
+              'ERROR_COMPRESSION_PARAMETERIZE',
+              { message: ':colvals must be an object' }
+            )
           return this.colvals(value.value)
         case 'cols':
-          if(typeof value.value !== 'object') throw new RequestError(this.engine.request, 2520, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':cols must be an array or object' })
+          if (typeof value.value !== 'object')
+            throw new RequestError(
+              this.engine.request,
+              2520,
+              'ERROR_COMPRESSION_PARAMETERIZE',
+              { message: ':cols must be an array or object' }
+            )
           return Array.isArray(value.value)
             ? this.arrayToList(value.value, true)
-            : this.arrayToList(Object.keys(value.value), true) 
+            : this.arrayToList(Object.keys(value.value), true)
         case 'vals':
-          if(typeof value.value !== 'object') throw new RequestError(this.engine.request, 2530, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':vals must be an array or object' })
+          if (typeof value.value !== 'object')
+            throw new RequestError(
+              this.engine.request,
+              2530,
+              'ERROR_COMPRESSION_PARAMETERIZE',
+              { message: ':vals must be an array or object' }
+            )
           return Array.isArray(value.value)
             ? this.arrayToList(value.value)
-            : this.arrayToList(Object.values(value.value)) 
+            : this.arrayToList(Object.values(value.value))
       }
-    } else if (typeof value === 'string' || typeof value === 'number') {
+    } else if (
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      Array.isArray(value)
+    ) {
       const index = this.params.indexOf(value)
       if (index > -1) return '$' + (index + 1)
       this.params.push(value)
       return '$' + this.params.length
     }
 
-    throw new RequestError(this.engine.request, 2540, 'ERROR_COMPRESSION_PARAMETERIZE', { message: 'arrays or objects, must use the :keyvals, :keys, or :values tool' })
+    throw new RequestError(
+      this.engine.request,
+      2540,
+      'ERROR_COMPRESSION_PARAMETERIZE',
+      {
+        message: 'objects, must use the :colvals, :cols, or :vals tool',
+      }
+    )
   }
 
   /**
@@ -109,7 +145,9 @@ export default class Compression {
   private arrayToList(array: string[], escape = false): string {
     let sql = ''
     array.forEach((val, i) => {
-      sql += (i === 0 ? '' : ', ') + (escape ? this.escapeIdentifier(val) : this.parameterize(val))
+      sql +=
+        (i === 0 ? '' : ', ') +
+        (escape ? this.escapeIdentifier(val) : this.parameterize(val))
     })
     return sql
   }
