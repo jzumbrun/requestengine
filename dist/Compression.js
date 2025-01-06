@@ -84,14 +84,18 @@ export default class Compression {
                         : this.arrayToList(Object.values(value.value));
             }
         }
-        else if (typeof value === 'string' || typeof value === 'number') {
+        else if (typeof value === 'string' ||
+            typeof value === 'number' ||
+            Array.isArray(value)) {
             const index = this.params.indexOf(value);
             if (index > -1)
                 return '$' + (index + 1);
             this.params.push(value);
             return '$' + this.params.length;
         }
-        throw new RequestError(this.engine.request, 2540, 'ERROR_COMPRESSION_PARAMETERIZE', { message: 'arrays or objects, must use the :keyvals, :keys, or :values tool' });
+        throw new RequestError(this.engine.request, 2540, 'ERROR_COMPRESSION_PARAMETERIZE', {
+            message: 'objects, must use the :colvals, :cols, or :vals tool',
+        });
     }
     /**
      * Unregister Escape Expression
@@ -105,7 +109,9 @@ export default class Compression {
     arrayToList(array, escape = false) {
         let sql = '';
         array.forEach((val, i) => {
-            sql += (i === 0 ? '' : ', ') + (escape ? this.escapeIdentifier(val) : this.parameterize(val));
+            sql +=
+                (i === 0 ? '' : ', ') +
+                    (escape ? this.escapeIdentifier(val) : this.parameterize(val));
         });
         return sql;
     }
