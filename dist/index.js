@@ -35,8 +35,7 @@ export default class RequestEngine {
      */
     middleware() {
         return (req, res) => __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            const response = yield this.run(((_a = req.body) === null || _a === void 0 ? void 0 : _a.requests) || [], req.operator);
+            const response = yield this.run(req.body || [], req.operator);
             res.send(response);
         });
     }
@@ -45,25 +44,27 @@ export default class RequestEngine {
      */
     run(requests, operator) {
         return __awaiter(this, void 0, void 0, function* () {
-            const response = { requests: [] };
+            const response = [];
             const timing = [];
             const revolution = {};
             try {
                 for (const request of requests) {
                     const engineCyle = Engine.engineCycle(request, this.garage, this.gear, operator, revolution);
-                    if (request.timing === false)
+                    if (request.timing === false) {
                         timing.push(engineCyle);
-                    else
-                        response.requests.push(yield engineCyle);
+                    }
+                    else {
+                        response.push(yield engineCyle);
+                    }
                 }
                 // Process all of the async queries here
                 // The catch was defined above in the creation of the promise
                 if (timing.length)
-                    response.requests.push(...yield Promise.all(timing));
+                    response.push(...(yield Promise.all(timing)));
             }
             catch (error) {
                 error.details = error.details || error.message;
-                response.requests.push({ error });
+                response.push({ engine: '?', error });
             }
             finally {
                 if (typeof this.gear.neutral === 'function')
@@ -76,7 +77,11 @@ export default class RequestEngine {
      * Get Engine Schemas
      */
     getEngineSchemas() {
-        return this.garage.engines.map(engine => ({ model: engine.model, intake: engine.intake, exhaust: engine.exhaust }));
+        return this.garage.engines.map((engine) => ({
+            model: engine.model,
+            intake: engine.intake,
+            exhaust: engine.exhaust,
+        }));
     }
 }
 /**

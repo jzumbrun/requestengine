@@ -21,8 +21,7 @@ export default class Engine {
         this.operator = operator;
         this.garage = garage;
         this.gear = gear;
-        this.model = ((_a = this.garage.engines) === null || _a === void 0 ? void 0 : _a.find((engine) => engine.model === request.engine))
-            || { model: '', ignition: [], intake: {}, exhaust: {} };
+        this.model = ((_a = this.garage.engines) === null || _a === void 0 ? void 0 : _a.find((engine) => engine.model === request.engine)) || { model: '', ignition: [], intake: {}, exhaust: {} };
         this.revolution = revolution || {};
     }
     static engineCycle(request, garage, gear, operator, revolution) {
@@ -35,8 +34,14 @@ export default class Engine {
         const revolution = this.revolution;
         const model = this.model;
         this.intakeValves = {
-            intake, operator, revolution, model,
-            i: intake, o: operator, r: revolution, m: model
+            intake,
+            operator,
+            revolution,
+            model,
+            i: intake,
+            o: operator,
+            r: revolution,
+            m: model,
         };
     }
     cycle() {

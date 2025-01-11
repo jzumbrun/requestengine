@@ -1,5 +1,5 @@
 import Engine from './Engine.js';
-import { IResult } from './types.js';
+import { IResponse } from './types.js';
 /**
  * Exhaust
  */
@@ -8,6 +8,6 @@ export default class Exhaust {
     private engine;
     private exhaustValves;
     constructor(engine: Engine, exhaustValves: unknown);
-    stroke(): IResult;
+    stroke(): IResponse;
 }
 //# sourceMappingURL=Exhaust.d.ts.map

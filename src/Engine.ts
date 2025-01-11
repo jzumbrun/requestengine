@@ -1,4 +1,13 @@
-import type { IGarage, IGear, IEngineModel, IRevolution, IRequest, IResult, IOperator, IIntakeValves } from './types.js'
+import type {
+  IGarage,
+  IGear,
+  IEngineModel,
+  IRevolution,
+  IResponse,
+  IRequest,
+  IOperator,
+  IIntakeValves,
+} from './types.js'
 import Intake from './Intake.js'
 import Compression from './Compression.js'
 import Power from './Power.js'
@@ -19,23 +28,30 @@ export default class Engine {
   exhaustValves: unknown
 
   constructor(
-    request: IRequest, 
+    request: IRequest,
     garage: IGarage,
     gear: IGear,
     operator?: IOperator,
-    revolution?: IRevolution,
+    revolution?: IRevolution
   ) {
     this.request = request
     this.operator = operator
     this.garage = garage
     this.gear = gear
-    this.model = this.garage.engines?.find((engine) => engine.model === request.engine)
-      || { model: '', ignition: [], intake: {}, exhaust: {} }
+    this.model = this.garage.engines?.find(
+      (engine) => engine.model === request.engine
+    ) || { model: '', ignition: [], intake: {}, exhaust: {} }
     this.revolution = revolution || {}
   }
 
-  public static engineCycle (request: IRequest, garage: IGarage, gear: IGear, operator?: IOperator, revolution?: IRevolution): Promise<IResult> {
-    const engine = new Engine(request,  garage, gear, operator, revolution)
+  public static engineCycle(
+    request: IRequest,
+    garage: IGarage,
+    gear: IGear,
+    operator?: IOperator,
+    revolution?: IRevolution
+  ): Promise<IResponse> {
+    const engine = new Engine(request, garage, gear, operator, revolution)
     return engine.cycle()
   }
 
@@ -45,12 +61,18 @@ export default class Engine {
     const revolution = this.revolution
     const model = this.model
     this.intakeValves = {
-      intake, operator, revolution, model,
-      i: intake, o: operator, r: revolution, m: model
+      intake,
+      operator,
+      revolution,
+      model,
+      i: intake,
+      o: operator,
+      r: revolution,
+      m: model,
     }
   }
 
-  private async cycle(): Promise<IResult> {
+  private async cycle(): Promise<IResponse> {
     const intake = new Intake(this)
     intake.stroke()
 
@@ -68,5 +90,4 @@ export default class Engine {
       return exhaust.stroke()
     }
   }
-  
 }

@@ -33,12 +33,10 @@ export interface IOperator {
 }
 export interface IHTTPRequest {
     operator: IOperator;
-    body: {
-        requests: IRequest[];
-    };
+    body: IRequest[];
 }
 export interface IHTTPResponse {
-    send: (response: IResponse) => void;
+    send: (response: IResponse[]) => void;
 }
 export interface IRequest {
     serial?: string;
@@ -47,12 +45,9 @@ export interface IRequest {
     timing?: boolean;
 }
 export interface IResponse {
-    requests: any[];
-}
-export interface IResult {
     serial?: string;
     engine: string;
-    results?: unknown;
+    response?: unknown;
     error?: EngineError;
 }
 export interface IToolBox {

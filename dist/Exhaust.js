@@ -14,12 +14,13 @@ export default class Exhaust {
     }
     stroke() {
         // Do we have proper exhaust schema
-        if (this.engine.model.exhaust && !this.avj.validate(this.engine.model.exhaust, this.exhaustValves)) {
+        if (this.engine.model.exhaust &&
+            !this.avj.validate(this.engine.model.exhaust, this.exhaustValves)) {
             throw new RequestError(getRequestEngine(this.engine.request), 1005, 'ERROR_REQUEST_EXHAUST_VALIDATION', this.avj.errors);
         }
         if (this.engine.request.serial)
             this.engine.revolution[this.engine.request.serial] = this.exhaustValves;
         // Add succesfull request response by id
-        return Object.assign(Object.assign({}, getRequestEngine(this.engine.request)), { results: this.exhaustValves });
+        return Object.assign(Object.assign({}, getRequestEngine(this.engine.request)), { response: this.exhaustValves });
     }
 }

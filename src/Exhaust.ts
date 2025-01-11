@@ -2,7 +2,7 @@ import { Ajv } from 'ajv'
 import ajvKeywords from 'ajv-keywords'
 import Engine from './Engine.js'
 import { getRequestEngine } from './toolChest.js'
-import { IResult } from './types.js'
+import { IResponse } from './types.js'
 import RequestError from './errors/RequestError.js'
 
 /**
@@ -20,15 +20,26 @@ export default class Exhaust {
     this.exhaustValves = exhaustValves
   }
 
-  public stroke (): IResult {
+  public stroke(): IResponse {
     // Do we have proper exhaust schema
-    if (this.engine.model.exhaust && !this.avj.validate(this.engine.model.exhaust, this.exhaustValves)) {
-      throw new RequestError(getRequestEngine(this.engine.request), 1005, 'ERROR_REQUEST_EXHAUST_VALIDATION', this.avj.errors)
+    if (
+      this.engine.model.exhaust &&
+      !this.avj.validate(this.engine.model.exhaust, this.exhaustValves)
+    ) {
+      throw new RequestError(
+        getRequestEngine(this.engine.request),
+        1005,
+        'ERROR_REQUEST_EXHAUST_VALIDATION',
+        this.avj.errors
+      )
     }
 
-    if (this.engine.request.serial) this.engine.revolution[this.engine.request.serial] = this.exhaustValves
+    if (this.engine.request.serial)
+      this.engine.revolution[this.engine.request.serial] = this.exhaustValves
     // Add succesfull request response by id
-    return { ...getRequestEngine(this.engine.request), results: this.exhaustValves }
+    return {
+      ...getRequestEngine(this.engine.request),
+      response: this.exhaustValves,
+    }
   }
-  
 }

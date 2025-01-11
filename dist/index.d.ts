@@ -22,11 +22,11 @@ export default class RequestEngine {
     /**
      * Execute requests
      */
-    run(requests: IRequest[], operator?: IOperator): Promise<IResponse>;
+    run(requests: IRequest[], operator?: IOperator): Promise<IResponse[]>;
     /**
      * Get Engine Schemas
      */
-    getEngineSchemas(): Pick<IEngineModel, "model" | "intake" | "exhaust">[];
+    getEngineSchemas(): Pick<IEngineModel, 'model' | 'intake' | 'exhaust'>[];
 }
 /**
  * Start

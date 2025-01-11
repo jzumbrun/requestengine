@@ -39,6 +39,7 @@ describe('RequestEngine', () => {
   describe('middleware', () => {
     const res: any = {
       send: (response: unknown) => {
+        console.log(response)
         res.data = response
       },
     }
@@ -63,21 +64,19 @@ describe('RequestEngine', () => {
               id: 123,
               keys: ['operator'],
             },
-            body: {
-              requests: [
-                {
-                  engine: ':operators:update',
-                  fuel: {
-                    operator: { name: 'Jon', age: 33 },
-                  },
+            body: [
+              {
+                engine: ':operators:update',
+                fuel: {
+                  operator: { name: 'Jon', age: 33 },
                 },
-              ],
-            },
+              },
+            ],
           },
           res
         )
         .then(() => {
-          expect(res.data.requests[0].results).toEqual([
+          expect(res.data[0].response).toEqual([
             'UPDATE operators SET "name" = $1, "age" = $2 WHERE id = $3',
             ['Jon', 33, 123],
           ])
@@ -118,37 +117,35 @@ describe('RequestEngine', () => {
               id: 123,
               keys: ['operator'],
             },
-            body: {
-              requests: [
-                {
-                  serial: '1',
-                  engine: 'long',
-                },
-                {
-                  serial: '2',
-                  engine: 'long',
-                  timing: false,
-                },
-                {
-                  serial: '3',
-                  engine: 'short',
-                  timing: false,
-                },
-                {
-                  serial: '4',
-                  engine: 'immediate',
-                },
-              ],
-            },
+            body: [
+              {
+                serial: '1',
+                engine: 'long',
+              },
+              {
+                serial: '2',
+                engine: 'long',
+                timing: false,
+              },
+              {
+                serial: '3',
+                engine: 'short',
+                timing: false,
+              },
+              {
+                serial: '4',
+                engine: 'immediate',
+              },
+            ],
           },
           res
         )
         .then(() => {
-          expect(res.data.requests).toEqual([
-            { engine: 'long', results: '200', serial: '1' },
-            { engine: 'immediate', results: '0', serial: '4' },
-            { engine: 'long', results: '200', serial: '2' },
-            { engine: 'short', results: '100', serial: '3' },
+          expect(res.data).toEqual([
+            { engine: 'long', response: '200', serial: '1' },
+            { engine: 'immediate', response: '0', serial: '4' },
+            { engine: 'long', response: '200', serial: '2' },
+            { engine: 'short', response: '100', serial: '3' },
           ])
           done()
         })
@@ -157,7 +154,7 @@ describe('RequestEngine', () => {
         })
     })
 
-    it('previous query results', (done) => {
+    it('previous query response', (done) => {
       start([
         {
           model: 'thing:one',
@@ -180,32 +177,30 @@ describe('RequestEngine', () => {
               id: 123,
               keys: ['operator'],
             },
-            body: {
-              requests: [
-                {
-                  serial: 'one',
-                  engine: 'thing:one',
-                },
-                {
-                  serial: 'two',
-                  engine: 'thing:two',
-                },
-              ],
-            },
+            body: [
+              {
+                serial: 'one',
+                engine: 'thing:one',
+              },
+              {
+                serial: 'two',
+                engine: 'thing:two',
+              },
+            ],
           },
           res
         )
         .then(() => {
-          expect(res.data.requests).toEqual([
+          expect(res.data).toEqual([
             {
               serial: 'one',
               engine: 'thing:one',
-              results: ['thing:one', []],
+              response: ['thing:one', []],
             },
             {
               serial: 'two',
               engine: 'thing:two',
-              results: ['thing:two is bigger than $1', ['thing:one']],
+              response: ['thing:two is bigger than $1', ['thing:one']],
             },
           ])
           done()
@@ -234,26 +229,24 @@ describe('RequestEngine', () => {
               id: 123,
               keys: ['operator'],
             },
-            body: {
-              requests: [
-                {
-                  serial: '1',
-                  engine: 'thing:one',
-                  fuel: {
-                    trimspace: '  nospaces   ',
-                  },
+            body: [
+              {
+                serial: '1',
+                engine: 'thing:one',
+                fuel: {
+                  trimspace: '  nospaces   ',
                 },
-              ],
-            },
+              },
+            ],
           },
           res
         )
         .then(() => {
-          expect(res.data.requests).toEqual([
+          expect(res.data).toEqual([
             {
               serial: '1',
               engine: 'thing:one',
-              results: ['thing:one $1', ['nospaces']],
+              response: ['thing:one $1', ['nospaces']],
             },
           ])
           done()
@@ -306,12 +299,12 @@ describe('RequestEngine', () => {
             keys: ['operator'],
           }
         )
-        .then(({ requests }) => {
+        .then((requests) => {
           expect(requests).toEqual([
             {
               serial: '1',
               engine: 'nested',
-              results: [
+              response: [
                 'UPDATE operators SET $1 = $2, $3 = $4,',
                 ['column1', 3, 'column2', 'hello'],
               ],
@@ -351,8 +344,8 @@ describe('RequestEngine', () => {
             keys: ['operator'],
           }
         )
-        .then(({ requests }) => {
-          expect(requests).toEqual([{ engine: 'power', results: 1 }])
+        .then((requests) => {
+          expect(requests).toEqual([{ engine: 'power', response: 1 }])
           done()
         })
         .catch((error) => {
@@ -384,9 +377,9 @@ describe('RequestEngine', () => {
             keys: ['operator'],
           }
         )
-        .then(({ requests }) => {
+        .then((requests) => {
           expect(requests).toEqual([
-            { engine: 'power', results: ['callCompression', []] },
+            { engine: 'power', response: ['callCompression', []] },
           ])
           done()
         })
@@ -415,7 +408,7 @@ describe('RequestEngine', () => {
               engine.gear,
               { id: 'system', keys: ['system'] }
             )
-            return result.results
+            return result.response
           },
           ignition: ['operator'],
         },
@@ -431,9 +424,9 @@ describe('RequestEngine', () => {
             keys: ['operator'],
           }
         )
-        .then(({ requests }) => {
+        .then((requests) => {
           expect(requests).toEqual([
-            { engine: 'power', results: ['another:engine:compression', []] },
+            { engine: 'power', response: ['another:engine:compression', []] },
           ])
           done()
         })
@@ -518,9 +511,9 @@ describe('RequestEngine', () => {
             keys: ['operator'],
           }
         )
-        .then(({ requests }) => {
+        .then((requests) => {
           expect(requests.length).toEqual(1)
-          expect(requests[0].error.code).toEqual(
+          expect(requests[0].error?.code).toEqual(
             'ERROR_REQUEST_INTAKE_VALIDATION'
           )
           done()
@@ -552,9 +545,9 @@ describe('RequestEngine', () => {
             keys: ['nothing'],
           }
         )
-        .then(({ requests }) => {
+        .then((requests) => {
           expect(requests.length).toEqual(1)
-          expect(requests[0].error.code).toEqual('ERROR_REQUEST_WRONG_KEYS')
+          expect(requests[0].error?.code).toEqual('ERROR_REQUEST_WRONG_KEYS')
           done()
         })
         .catch((error) => {
@@ -583,9 +576,9 @@ describe('RequestEngine', () => {
             keys: ['operator'],
           }
         )
-        .then(({ requests }) => {
+        .then((requests) => {
           expect(requests).toEqual([
-            { engine: 'empy:ignition', results: ['test', []] },
+            { engine: 'empy:ignition', response: ['test', []] },
           ])
           done()
         })
@@ -609,9 +602,9 @@ describe('RequestEngine', () => {
             engine: 'empy:ignition',
           },
         ])
-        .then(({ requests }) => {
+        .then((requests) => {
           expect(requests).toEqual([
-            { engine: 'empy:ignition', results: ['test', []] },
+            { engine: 'empy:ignition', response: ['test', []] },
           ])
           done()
         })
@@ -642,9 +635,9 @@ describe('RequestEngine', () => {
             keys: ['operator'],
           }
         )
-        .then(({ requests }) => {
+        .then((requests) => {
           expect(requests.length).toEqual(1)
-          expect(requests[0].error.code).toEqual(
+          expect(requests[0].error?.code).toEqual(
             'ERROR_REQUEST_ENGINE_MODEL_NOT_FOUND'
           )
           done()
@@ -676,11 +669,11 @@ describe('RequestEngine', () => {
             keys: ['operator'],
           }
         )
-        .then(({ requests }) => {
+        .then((requests) => {
           expect(requests.length).toEqual(1)
           expect(requests[0]).toEqual({
             engine: 'wrong:params',
-            results: ['$1', [['Abe']]],
+            response: ['$1', [['Abe']]],
           })
           done()
         })
@@ -727,11 +720,11 @@ describe('RequestEngine', () => {
             keys: ['operator'],
           }
         )
-        .then(({ requests }) => {
+        .then((requests) => {
           expect(requests).toEqual([
             {
               engine: 'object:engine',
-              results: [
+              response: [
                 'INSERT INTO operators ("firstName", "lastName") VALUES($1, $2)',
                 ['Abe', 'Lincoln'],
               ],

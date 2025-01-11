@@ -1,4 +1,4 @@
-import type { IGarage, IGear, IEngineModel, IRevolution, IRequest, IResult, IOperator, IIntakeValves } from './types.js';
+import type { IGarage, IGear, IEngineModel, IRevolution, IResponse, IRequest, IOperator, IIntakeValves } from './types.js';
 /**
  * Engine
  */
@@ -12,7 +12,7 @@ export default class Engine {
     intakeValves: IIntakeValves;
     exhaustValves: unknown;
     constructor(request: IRequest, garage: IGarage, gear: IGear, operator?: IOperator, revolution?: IRevolution);
-    static engineCycle(request: IRequest, garage: IGarage, gear: IGear, operator?: IOperator, revolution?: IRevolution): Promise<IResult>;
+    static engineCycle(request: IRequest, garage: IGarage, gear: IGear, operator?: IOperator, revolution?: IRevolution): Promise<IResponse>;
     private liftIntakeValves;
     private cycle;
 }
