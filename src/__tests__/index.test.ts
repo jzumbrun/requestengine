@@ -39,7 +39,6 @@ describe('RequestEngine', () => {
   describe('middleware', () => {
     const res: any = {
       send: (response: unknown) => {
-        console.log(response)
         res.data = response
       },
     }
