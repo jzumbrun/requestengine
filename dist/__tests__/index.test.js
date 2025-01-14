@@ -44,7 +44,6 @@ describe('RequestEngine', () => {
     describe('middleware', () => {
         const res = {
             send: (response) => {
-                console.log(response);
                 res.data = response;
             },
         };

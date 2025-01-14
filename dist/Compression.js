@@ -115,6 +115,9 @@ export default class Compression {
         var _a;
         const $this = this;
         const handlebars = $this.handlebars;
+        // Only register once
+        if (toolBox[toolBox.length - 1].prefix === ':')
+            return;
         toolBox.push({
             prefix: ':',
             tools: {
