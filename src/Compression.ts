@@ -152,23 +152,23 @@ export default class Compression {
   private registerToolBox(toolBox: IToolBox[] = []): void {
     const $this = this
     const handlebars = $this.handlebars
-    // Only register once
-    if (toolBox[toolBox.length - 1].prefix === ':') return
-
-    toolBox.push({
-      prefix: ':',
-      tools: {
-        colvals: function (value: unknown) {
-          return { value, __tool__: 'colvals' }
+    // Only add : once
+    if (toolBox[toolBox.length - 1].prefix !== ':') {
+      toolBox.push({
+        prefix: ':',
+        tools: {
+          colvals: function (value: unknown) {
+            return { value, __tool__: 'colvals' }
+          },
+          cols: function (value: unknown) {
+            return { value, __tool__: 'cols' }
+          },
+          vals: function (value: unknown) {
+            return { value, __tool__: 'vals' }
+          },
         },
-        cols: function (value: unknown) {
-          return { value, __tool__: 'cols' }
-        },
-        vals: function (value: unknown) {
-          return { value, __tool__: 'vals' }
-        },
-      },
-    })
+      })
+    }
 
     for (const drawer of toolBox) {
       // Set defaults

@@ -115,23 +115,23 @@ export default class Compression {
         var _a;
         const $this = this;
         const handlebars = $this.handlebars;
-        // Only register once
-        if (toolBox[toolBox.length - 1].prefix === ':')
-            return;
-        toolBox.push({
-            prefix: ':',
-            tools: {
-                colvals: function (value) {
-                    return { value, __tool__: 'colvals' };
+        // Only add : once
+        if (toolBox[toolBox.length - 1].prefix !== ':') {
+            toolBox.push({
+                prefix: ':',
+                tools: {
+                    colvals: function (value) {
+                        return { value, __tool__: 'colvals' };
+                    },
+                    cols: function (value) {
+                        return { value, __tool__: 'cols' };
+                    },
+                    vals: function (value) {
+                        return { value, __tool__: 'vals' };
+                    },
                 },
-                cols: function (value) {
-                    return { value, __tool__: 'cols' };
-                },
-                vals: function (value) {
-                    return { value, __tool__: 'vals' };
-                },
-            },
-        });
+            });
+        }
         for (const drawer of toolBox) {
             // Set defaults
             drawer.tools = drawer.tools || {};
