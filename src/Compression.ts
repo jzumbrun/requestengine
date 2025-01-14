@@ -69,7 +69,8 @@ export default class Compression {
    * Parameterize
    */
   private parameterize(value: any): string {
-    if (typeof value === 'object' && value.__tool__) {
+    // Ensure nulls, which are objects, do not fall to value.__tool__
+    if (value && typeof value === 'object' && value.__tool__) {
       switch (value.__tool__) {
         case 'colvals':
           if (typeof value.value !== 'object')
