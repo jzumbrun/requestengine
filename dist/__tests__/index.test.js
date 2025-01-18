@@ -467,6 +467,7 @@ describe('RequestEngine', () => {
                 .then((requests) => {
                 var _a;
                 expect(requests.length).toEqual(1);
+                expect(requests[0].engine).toEqual('wrong:intake');
                 expect((_a = requests[0].error) === null || _a === void 0 ? void 0 : _a.code).toEqual('ERROR_REQUEST_INTAKE_VALIDATION');
                 done();
             })
@@ -631,11 +632,17 @@ describe('RequestEngine', () => {
                                 },
                                 additionalProperties: false,
                             },
+                            throttle: {
+                                type: 'object',
+                                properties: {
+                                    select: { type: 'string' },
+                                },
+                            },
                         },
                         additionalProperties: false,
                     },
                     exhaust: { type: 'array' },
-                    compression: 'INSERT INTO operators ({{:cols i.operator}}) VALUES({{:vals i.operator}})',
+                    compression: 'INSERT INTO operators ({{:cols i.operator}}) VALUES({{:vals i.operator}}) RETURNING {{:cols intake.throttle.select}}',
                     ignition: ['operator'],
                 },
             ])
@@ -643,7 +650,11 @@ describe('RequestEngine', () => {
                 {
                     engine: 'object:engine',
                     fuel: {
-                        operator: { firstName: 'Abe', lastName: 'Lincoln' },
+                        operator: {
+                            firstName: 'Abe',
+                            lastName: 'Lincoln',
+                        },
+                        throttle: { select: 'id' },
                     },
                 },
             ], {
@@ -655,7 +666,7 @@ describe('RequestEngine', () => {
                     {
                         engine: 'object:engine',
                         response: [
-                            'INSERT INTO operators ("firstName", "lastName") VALUES($1, $2)',
+                            'INSERT INTO operators ("firstName", "lastName") VALUES($1, $2) RETURNING "id"',
                             ['Abe', 'Lincoln'],
                         ],
                     },

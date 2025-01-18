@@ -57,8 +57,11 @@ export default class Compression {
                         throw new RequestError(this.engine.request, 2510, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':colvals must be an object' });
                     return this.colvals(value.value);
                 case 'cols':
+                    if (typeof value.value === 'string') {
+                        return this.escapeIdentifier(value.value);
+                    }
                     if (typeof value.value !== 'object')
-                        throw new RequestError(this.engine.request, 2520, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':cols must be an array or object' });
+                        throw new RequestError(this.engine.request, 2520, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':cols must be a string, an array or object' });
                     return Array.isArray(value.value)
                         ? this.arrayToList(value.value, true)
                         : this.arrayToList(Object.keys(value.value), true);

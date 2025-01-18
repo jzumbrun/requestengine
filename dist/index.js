@@ -44,6 +44,7 @@ export default class RequestEngine {
      */
     run(requests, operator) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
             const response = [];
             const timing = [];
             const revolution = {};
@@ -64,7 +65,11 @@ export default class RequestEngine {
             }
             catch (error) {
                 error.details = error.details || error.message;
-                response.push({ engine: '?', error });
+                response.push({
+                    engine: (_a = error === null || error === void 0 ? void 0 : error.request) === null || _a === void 0 ? void 0 : _a.engine,
+                    serial: (_b = error === null || error === void 0 ? void 0 : error.request) === null || _b === void 0 ? void 0 : _b.serial,
+                    error,
+                });
             }
             finally {
                 if (typeof this.gear.neutral === 'function')
