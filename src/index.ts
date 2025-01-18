@@ -83,7 +83,11 @@ export default class RequestEngine {
       if (timing.length) response.push(...(await Promise.all(timing)))
     } catch (error: any) {
       error.details = error.details || error.message
-      response.push({ engine: '?', error })
+      response.push({
+        engine: error?.request?.engine,
+        serial: error?.request?.serial,
+        error,
+      })
     } finally {
       if (typeof this.gear.neutral === 'function') this.gear.neutral(response)
     }

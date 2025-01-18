@@ -66,10 +66,12 @@ Each engine is given a model, an compression statement, a keys list, and an inta
 - model!: string; Model should reflect the resource and action, like "notes.update". This is only a convention. But it must be unique.
 - compression?: string; The `compression` property is a simple SQL statement managed by handlebars. Handlebars will take care of sql injections using postgres parameterization. Any value within {{}} will be evaluated, and postgres escaped by handlebars. Objects and arrays can be used within {{}} however they must use one of the following handlebar helper functions (aka tools):
 
+  Ex string: `select` -> `id`  
   Ex object: `intake.person` -> `{ lastName: 'Able', lastName: 'Lincoln', age: 215}`  
-   Ex array: `intake.jobs` -> `['engineer', 'plummer', 'doctor']`
+  Ex array: `intake.jobs` -> `['engineer', 'plummer', 'doctor']`
 
-  - `:cols` type(array or object) will list escaped array values or object keys.
+  - `:cols` type(string, array or object) will list escaped strings (identifiers), array values or object keys.
+    - Ex: `{{:cols select}}` -> `"id"`
     - Ex: `{{:cols intake.person}}` -> `"firstName", "lastName", "age"`
     - Ex: `{{:cols intake.jobs}}` -> `"engineer", "plummer", "doctor"`
   - `:vals` type(array or object) will list array values and object values.

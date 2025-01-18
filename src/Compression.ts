@@ -82,12 +82,15 @@ export default class Compression {
             )
           return this.colvals(value.value)
         case 'cols':
+          if (typeof value.value === 'string') {
+            return this.escapeIdentifier(value.value)
+          }
           if (typeof value.value !== 'object')
             throw new RequestError(
               this.engine.request,
               2520,
               'ERROR_COMPRESSION_PARAMETERIZE',
-              { message: ':cols must be an array or object' }
+              { message: ':cols must be a string, an array or object' }
             )
           return Array.isArray(value.value)
             ? this.arrayToList(value.value, true)
