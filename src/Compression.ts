@@ -96,7 +96,7 @@ export default class Compression {
           if (typeof value.value !== 'object')
             throw new RequestError(
               this.engine.request,
-              2530,
+              2540,
               'ERROR_COMPRESSION_PARAMETERIZE',
               { message: ':vals must be an array or object' }
             )
@@ -107,7 +107,7 @@ export default class Compression {
           if (typeof value.value === 'object')
             throw new RequestError(
               this.engine.request,
-              2530,
+              2550,
               'ERROR_COMPRESSION_PARAMETERIZE',
               {
                 message:
@@ -127,7 +127,7 @@ export default class Compression {
           if (typeof value.value !== 'object')
             throw new RequestError(
               this.engine.request,
-              2530,
+              2560,
               'ERROR_COMPRESSION_PARAMETERIZE',
               { message: ':vals must be an object' }
             )
@@ -166,8 +166,16 @@ export default class Compression {
   private orderBy(object: Record<string, any>): string {
     let sql = ''
     Object.keys(object).forEach((key: string, i) => {
-      sql +=
-        (i === 0 ? '' : ', ') + `${this.escapeIdentifier(key)} ${object[key]}`
+      const dir = object[key].toUpperCase()
+      if (dir !== 'ASC' && dir !== 'DESC') {
+        throw new RequestError(
+          this.engine.request,
+          2561,
+          'ERROR_COMPRESSION_PARAMETERIZE',
+          { message: 'Order by must be ASC or DESC' }
+        )
+      }
+      sql += (i === 0 ? '' : ', ') + `${this.escapeIdentifier(key)} ${dir}`
     })
     return sql
   }
