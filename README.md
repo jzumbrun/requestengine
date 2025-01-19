@@ -63,15 +63,17 @@ app.post('/requests', requestengine.middleware())
 
 Each engine is given a model, an compression statement, a keys list, and an intake schema.
 
-- model!: string; Model should reflect the resource and action, like "notes.update". This is only a convention. But it must be unique.
-- compression?: string; The `compression` property is a simple SQL statement managed by handlebars. Handlebars will take care of sql injections using postgres parameterization. Any value within {{}} will be evaluated, and postgres escaped by handlebars. Objects and arrays can be used within {{}} however they must use one of the following handlebar helper functions (aka tools):
+- model!: string; Model should reflect the resource and action, like "notes:update". This is only a convention. But it must be unique.
+- compression?: string; The `compression` property is a simple SQL statement managed by handlebars. Handlebars will take care of sql injections using postgres parameterization. Any value within {{}} will be replace by a postgres parameter such as $1.
+  Postgres does not allow parameterization of "values or identifiers", such as SELECT columns, or LIMIT values, etc. so we provide a :esc tool to help with those. For convenience, other tools such as :cols, :vals and :colvals help simplify setting objects and arrays to parameters.
 
   Ex string: `select` -> `id`  
-  Ex object: `intake.person` -> `{ lastName: 'Able', lastName: 'Lincoln', age: 215}`  
-  Ex array: `intake.jobs` -> `['engineer', 'plummer', 'doctor']`
+   Ex number: `limit` -> `20`  
+   Ex undefined: `unknown` -> `undefined`  
+   Ex object: `intake.person` -> `{ lastName: 'Able', lastName: 'Lincoln', age: 215}`  
+   Ex array: `intake.jobs` -> `['engineer', 'plummer', 'doctor']`
 
-  - `:cols` type(string, array or object) will list escaped strings (identifiers), array values or object keys.
-    - Ex: `{{:cols select}}` -> `"id"`
+  - `:cols` type(array or object) will list escaped array values or object keys.
     - Ex: `{{:cols intake.person}}` -> `"firstName", "lastName", "age"`
     - Ex: `{{:cols intake.jobs}}` -> `"engineer", "plummer", "doctor"`
   - `:vals` type(array or object) will list array values and object values.
@@ -79,6 +81,10 @@ Each engine is given a model, an compression statement, a keys list, and an inta
     - Ex: `{{:vals intake.jobs}}` -> `$1, $2, $3`
   - `:colvals` type(object) will list key value pairs with the key escaped.
     - Ex: `{{:colvals intake.person}}` -> `"firstName" = $1, "lastName" = $2, "age" = $3`
+  - `:esc` type(strings, number, boolean, null, undefined)
+    - Ex: `{{:esc select}}` -> `"id"`
+    - Ex: `{{:esc limit}}` -> `20`
+    - Ex: `{{:esc unknown}}` -> `NULL`
 
   These tools help with queries such as:
 

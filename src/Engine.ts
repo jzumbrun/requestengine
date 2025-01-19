@@ -65,10 +65,6 @@ export default class Engine {
       operator,
       revolution,
       model,
-      i: intake,
-      o: operator,
-      r: revolution,
-      m: model,
     }
   }
 
