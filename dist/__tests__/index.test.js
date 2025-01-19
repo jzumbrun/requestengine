@@ -51,7 +51,7 @@ describe('RequestEngine', () => {
             start([
                 {
                     model: ':operators:update',
-                    compression: 'UPDATE operators SET {{:colvals i.operator}} WHERE id = {{o.id}}',
+                    compression: 'UPDATE operators SET {{:colvals intake.operator}} WHERE id = {{operator.id}}',
                     intake: {
                         type: 'object',
                         properties: { operator: { type: 'object' } },
@@ -159,7 +159,7 @@ describe('RequestEngine', () => {
                 },
                 {
                     model: 'thing:two',
-                    compression: 'thing:two is bigger than {{r.one.[0]}}',
+                    compression: 'thing:two is bigger than {{revolution.one.[0]}}',
                     intake: { type: 'null' },
                     exhaust: { type: 'array' },
                     ignition: ['operator'],
@@ -204,7 +204,7 @@ describe('RequestEngine', () => {
             start([
                 {
                     model: 'thing:one',
-                    compression: 'thing:one {{_trim i.trimspace}}',
+                    compression: 'thing:one {{_trim intake.trimspace}}',
                     intake: {
                         type: 'object',
                         properties: { trimspace: { type: 'string' } },
@@ -617,7 +617,7 @@ describe('RequestEngine', () => {
                 done(error);
             });
         });
-        it('compression uses object', (done) => {
+        it('compression uses object, string and number', (done) => {
             start([
                 {
                     model: 'object:engine',
@@ -635,14 +635,19 @@ describe('RequestEngine', () => {
                             throttle: {
                                 type: 'object',
                                 properties: {
-                                    select: { type: 'string' },
+                                    select: {
+                                        type: 'array',
+                                        items: [{ const: 'id' }, { const: 'lastName' }],
+                                    },
+                                    limit: { type: 'number' },
                                 },
+                                additionalProperties: false,
                             },
                         },
                         additionalProperties: false,
                     },
                     exhaust: { type: 'array' },
-                    compression: 'INSERT INTO operators ({{:cols i.operator}}) VALUES({{:vals i.operator}}) RETURNING {{:cols intake.throttle.select}}',
+                    compression: `INSERT INTO operators ({{:cols intake.operator}}) VALUES({{:vals intake.operator}}); SELECT {{:cols intake.throttle.select}} FROM operators LIMIT {{:esc intake.throttle.limit}}`,
                     ignition: ['operator'],
                 },
             ])
@@ -654,7 +659,7 @@ describe('RequestEngine', () => {
                             firstName: 'Abe',
                             lastName: 'Lincoln',
                         },
-                        throttle: { select: 'id' },
+                        throttle: { select: ['id'], limit: 20 },
                     },
                 },
             ], {
@@ -666,7 +671,7 @@ describe('RequestEngine', () => {
                     {
                         engine: 'object:engine',
                         response: [
-                            'INSERT INTO operators ("firstName", "lastName") VALUES($1, $2) RETURNING "id"',
+                            'INSERT INTO operators ("firstName", "lastName") VALUES($1, $2); SELECT "id" FROM operators LIMIT 20',
                             ['Abe', 'Lincoln'],
                         ],
                     },

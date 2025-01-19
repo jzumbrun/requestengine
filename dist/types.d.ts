@@ -60,9 +60,5 @@ export interface IIntakeValves {
     operator?: IOperator;
     revolution: IRevolution;
     model: IEngineModel;
-    i: IIntakeValves['intake'];
-    o: IIntakeValves['operator'];
-    r: IIntakeValves['revolution'];
-    m: IIntakeValves['model'];
 }
 //# sourceMappingURL=types.d.ts.map

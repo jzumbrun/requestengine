@@ -57,11 +57,8 @@ export default class Compression {
                         throw new RequestError(this.engine.request, 2510, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':colvals must be an object' });
                     return this.colvals(value.value);
                 case 'cols':
-                    if (typeof value.value === 'string') {
-                        return this.escapeIdentifier(value.value);
-                    }
                     if (typeof value.value !== 'object')
-                        throw new RequestError(this.engine.request, 2520, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':cols must be a string, an array or object' });
+                        throw new RequestError(this.engine.request, 2520, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':cols must be an array or object' });
                     return Array.isArray(value.value)
                         ? this.arrayToList(value.value, true)
                         : this.arrayToList(Object.keys(value.value), true);
@@ -71,6 +68,19 @@ export default class Compression {
                     return Array.isArray(value.value)
                         ? this.arrayToList(value.value)
                         : this.arrayToList(Object.values(value.value));
+                case 'esc':
+                    if (typeof value.value === 'object')
+                        throw new RequestError(this.engine.request, 2530, 'ERROR_COMPRESSION_PARAMETERIZE', {
+                            message: ':esc must be a string, number, bool, undefined or null',
+                        });
+                    else if (typeof value.value === 'string') {
+                        return this.escapeIdentifier(value.value);
+                    }
+                    else if (typeof value.value === 'number' ||
+                        typeof value.value === 'boolean') {
+                        return String(value.value);
+                    }
+                    return 'NULL';
             }
         }
         const index = this.params.indexOf(value);
@@ -131,6 +141,9 @@ export default class Compression {
                     },
                     vals: function (value) {
                         return { value, __tool__: 'vals' };
+                    },
+                    esc: function (value) {
+                        return { value, __tool__: 'esc' };
                     },
                 },
             });
