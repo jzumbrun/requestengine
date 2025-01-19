@@ -103,7 +103,7 @@ export default class Compression {
           return Array.isArray(value.value)
             ? this.arrayToList(value.value)
             : this.arrayToList(Object.values(value.value))
-        case 'esc':
+        case 'escape':
           if (typeof value.value === 'object')
             throw new RequestError(
               this.engine.request,
@@ -123,6 +123,15 @@ export default class Compression {
             return String(value.value)
           }
           return 'NULL'
+        case 'orderBy':
+          if (typeof value.value !== 'object')
+            throw new RequestError(
+              this.engine.request,
+              2530,
+              'ERROR_COMPRESSION_PARAMETERIZE',
+              { message: ':vals must be an object' }
+            )
+          return this.orderBy(value.value)
       }
     }
     const index = this.params.indexOf(value)
@@ -151,6 +160,17 @@ export default class Compression {
     return sql
   }
 
+  /**
+   * Order By
+   */
+  private orderBy(object: Record<string, any>): string {
+    let sql = ''
+    Object.keys(object).forEach((key: string, i) => {
+      sql +=
+        (i === 0 ? '' : ', ') + `${this.escapeIdentifier(key)} ${object[key]}`
+    })
+    return sql
+  }
   /**
    * Colum values
    */
@@ -186,8 +206,11 @@ export default class Compression {
           vals: function (value: unknown) {
             return { value, __tool__: 'vals' }
           },
-          esc: function (value: unknown) {
-            return { value, __tool__: 'esc' }
+          escape: function (value: unknown) {
+            return { value, __tool__: 'escape' }
+          },
+          orderBy: function (value: unknown) {
+            return { value, __tool__: 'orderBy' }
           },
         },
       })

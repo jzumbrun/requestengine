@@ -34,6 +34,10 @@ export default class Compression {
      */
     private arrayToList;
     /**
+     * Order By
+     */
+    private orderBy;
+    /**
      * Colum values
      */
     private colvals;

@@ -68,7 +68,7 @@ export default class Compression {
                     return Array.isArray(value.value)
                         ? this.arrayToList(value.value)
                         : this.arrayToList(Object.values(value.value));
-                case 'esc':
+                case 'escape':
                     if (typeof value.value === 'object')
                         throw new RequestError(this.engine.request, 2530, 'ERROR_COMPRESSION_PARAMETERIZE', {
                             message: ':esc must be a string, number, bool, undefined or null',
@@ -81,6 +81,10 @@ export default class Compression {
                         return String(value.value);
                     }
                     return 'NULL';
+                case 'orderBy':
+                    if (typeof value.value !== 'object')
+                        throw new RequestError(this.engine.request, 2530, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':vals must be an object' });
+                    return this.orderBy(value.value);
             }
         }
         const index = this.params.indexOf(value);
@@ -104,6 +108,17 @@ export default class Compression {
             sql +=
                 (i === 0 ? '' : ', ') +
                     (escape ? this.escapeIdentifier(val) : this.parameterize(val));
+        });
+        return sql;
+    }
+    /**
+     * Order By
+     */
+    orderBy(object) {
+        let sql = '';
+        Object.keys(object).forEach((key, i) => {
+            sql +=
+                (i === 0 ? '' : ', ') + `${this.escapeIdentifier(key)} ${object[key]}`;
         });
         return sql;
     }
@@ -142,8 +157,11 @@ export default class Compression {
                     vals: function (value) {
                         return { value, __tool__: 'vals' };
                     },
-                    esc: function (value) {
-                        return { value, __tool__: 'esc' };
+                    escape: function (value) {
+                        return { value, __tool__: 'escape' };
+                    },
+                    orderBy: function (value) {
+                        return { value, __tool__: 'orderBy' };
                     },
                 },
             });

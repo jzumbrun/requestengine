@@ -705,6 +705,14 @@ describe('RequestEngine', () => {
                     items: [{ const: 'id' }, { const: 'lastName' }],
                   },
                   limit: { type: 'number' },
+                  orderBy: {
+                    type: 'object',
+                    properties: {
+                      lastName: { type: 'string' },
+                      createdAt: { type: 'string' },
+                    },
+                    additionalProperties: false,
+                  },
                 },
                 additionalProperties: false,
               },
@@ -712,7 +720,7 @@ describe('RequestEngine', () => {
             additionalProperties: false,
           },
           exhaust: { type: 'array' },
-          compression: `INSERT INTO operators ({{:cols intake.operator}}) VALUES({{:vals intake.operator}}); SELECT {{:cols intake.throttle.select}} FROM operators LIMIT {{:esc intake.throttle.limit}}`,
+          compression: `INSERT INTO operators ({{:cols intake.operator}}) VALUES({{:vals intake.operator}}); SELECT {{:cols intake.throttle.select}} FROM operators ORDER BY {{:orderBy intake.throttle.orderBy}} LIMIT {{:escape intake.throttle.limit}}`,
           ignition: ['operator'],
         },
       ])
@@ -725,7 +733,11 @@ describe('RequestEngine', () => {
                   firstName: 'Abe',
                   lastName: 'Lincoln',
                 },
-                throttle: { select: ['id'], limit: 20 },
+                throttle: {
+                  select: ['id'],
+                  orderBy: { lastName: 'ASC', createdAt: 'DESC' },
+                  limit: 20,
+                },
               },
             },
           ],
@@ -739,7 +751,7 @@ describe('RequestEngine', () => {
             {
               engine: 'object:engine',
               response: [
-                'INSERT INTO operators ("firstName", "lastName") VALUES($1, $2); SELECT "id" FROM operators LIMIT 20',
+                'INSERT INTO operators ("firstName", "lastName") VALUES($1, $2); SELECT "id" FROM operators ORDER BY "lastName" ASC, "createdAt" DESC LIMIT 20',
                 ['Abe', 'Lincoln'],
               ],
             },
