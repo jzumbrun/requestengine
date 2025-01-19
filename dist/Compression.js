@@ -64,13 +64,13 @@ export default class Compression {
                         : this.arrayToList(Object.keys(value.value), true);
                 case 'vals':
                     if (typeof value.value !== 'object')
-                        throw new RequestError(this.engine.request, 2530, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':vals must be an array or object' });
+                        throw new RequestError(this.engine.request, 2540, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':vals must be an array or object' });
                     return Array.isArray(value.value)
                         ? this.arrayToList(value.value)
                         : this.arrayToList(Object.values(value.value));
                 case 'escape':
                     if (typeof value.value === 'object')
-                        throw new RequestError(this.engine.request, 2530, 'ERROR_COMPRESSION_PARAMETERIZE', {
+                        throw new RequestError(this.engine.request, 2550, 'ERROR_COMPRESSION_PARAMETERIZE', {
                             message: ':esc must be a string, number, bool, undefined or null',
                         });
                     else if (typeof value.value === 'string') {
@@ -83,7 +83,7 @@ export default class Compression {
                     return 'NULL';
                 case 'orderBy':
                     if (typeof value.value !== 'object')
-                        throw new RequestError(this.engine.request, 2530, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':vals must be an object' });
+                        throw new RequestError(this.engine.request, 2560, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':vals must be an object' });
                     return this.orderBy(value.value);
             }
         }
@@ -117,8 +117,11 @@ export default class Compression {
     orderBy(object) {
         let sql = '';
         Object.keys(object).forEach((key, i) => {
-            sql +=
-                (i === 0 ? '' : ', ') + `${this.escapeIdentifier(key)} ${object[key]}`;
+            const dir = object[key].toUpperCase();
+            if (dir !== 'ASC' && dir !== 'DESC') {
+                throw new RequestError(this.engine.request, 2561, 'ERROR_COMPRESSION_PARAMETERIZE', { message: 'Order by must be ASC or DESC' });
+            }
+            sql += (i === 0 ? '' : ', ') + `${this.escapeIdentifier(key)} ${dir}`;
         });
         return sql;
     }
