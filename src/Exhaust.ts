@@ -14,7 +14,7 @@ export default class Exhaust {
   private exhaustValves: unknown
 
   constructor(engine: Engine, exhaustValves: unknown) {
-    this.avj = new Ajv({ useDefaults: true, removeAdditional: 'all' })
+    this.avj = new Ajv({ useDefaults: true })
     ajvKeywords.default(this.avj)
     this.engine = engine
     this.exhaustValves = exhaustValves

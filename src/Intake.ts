@@ -13,62 +13,86 @@ export default class Intake {
 
   constructor(engine: Engine) {
     this.engine = engine
-    this.avj = new Ajv({ useDefaults: true, removeAdditional: 'all' })
+    this.avj = new Ajv({ useDefaults: true })
     ajvKeywords.default(this.avj)
   }
 
   public stroke(): never | void {
-
     // Do we have a engine?
     if (!this.engine.model.model) {
-      throw new RequestError(getRequestEngine(this.engine.request), 2000, 'ERROR_REQUEST_ENGINE_MODEL_NOT_FOUND')
+      throw new RequestError(
+        getRequestEngine(this.engine.request),
+        2000,
+        'ERROR_REQUEST_ENGINE_MODEL_NOT_FOUND'
+      )
     }
 
     // Do we have the correct keys for the ignition?
     if (!this.ignitionKeysIntersects()) {
-      throw new RequestError(getRequestEngine(this.engine.request), 2001, 'ERROR_REQUEST_WRONG_KEYS')
+      throw new RequestError(
+        getRequestEngine(this.engine.request),
+        2001,
+        'ERROR_REQUEST_WRONG_KEYS'
+      )
     }
 
-    if (!this.avj.validate(this.engine.model.intake, this.engine.request.fuel || null)) {
-      throw new RequestError(getRequestEngine(this.engine.request), 2003, 'ERROR_REQUEST_INTAKE_VALIDATION', this.avj.errors)
+    if (
+      !this.avj.validate(
+        this.engine.model.intake,
+        this.engine.request.fuel || null
+      )
+    ) {
+      throw new RequestError(
+        getRequestEngine(this.engine.request),
+        2003,
+        'ERROR_REQUEST_INTAKE_VALIDATION',
+        this.avj.errors
+      )
     }
   }
 
-  private ignitionKeysIntersects (): boolean {
-    if(!this.engine.model.ignition.length) return true
+  private ignitionKeysIntersects(): boolean {
+    if (!this.engine.model.ignition.length) return true
     const setA = new Set(this.engine.model.ignition)
-    return (this.engine.operator?.keys || []).some(value => setA.has(value))
+    return (this.engine.operator?.keys || []).some((value) => setA.has(value))
   }
 
   /**
    * Check
    */
-  public check (): boolean {
+  public check(): boolean {
     return this.avj.validate(
       {
         type: 'object',
         properties: {
           serial: {
             type: 'string',
-            default: ''
+            default: '',
           },
           engine: {
             type: 'string',
-            default: 'ERROR_MISSING_MODEL'
+            default: 'ERROR_MISSING_MODEL',
           },
           fuel: {
-            type: ['number', 'integer', 'string', 'boolean', 'array', 'object', 'null']
+            type: [
+              'number',
+              'integer',
+              'string',
+              'boolean',
+              'array',
+              'object',
+              'null',
+            ],
           },
           timing: {
             type: 'boolean',
-            default: false
-          }
+            default: false,
+          },
         },
         additionalProperties: false,
-        required: ['engine']
+        required: ['engine'],
       },
       this.engine.request
     )
   }
-
 }
