@@ -52,26 +52,26 @@ export default class Compression {
         // Ensure nulls, which are objects, do not fall to value.__tool__
         if (value && typeof value === 'object' && value.__tool__) {
             switch (value.__tool__) {
-                case 'colvals':
+                case 'assign':
                     if (typeof value.value !== 'object')
-                        throw new RequestError(this.engine.request, 2510, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':colvals must be an object' });
-                    return this.colvals(value.value);
-                case 'cols':
+                        throw new RequestError(this.engine.request, 2510, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':set must be an object' });
+                    return this.assign(value.value);
+                case 'columns':
                     if (typeof value.value !== 'object')
-                        throw new RequestError(this.engine.request, 2520, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':cols must be an array or object' });
+                        throw new RequestError(this.engine.request, 2520, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':columns must be an array or object' });
                     return Array.isArray(value.value)
                         ? this.arrayToList(value.value, true)
                         : this.arrayToList(Object.keys(value.value), true);
-                case 'vals':
+                case 'values':
                     if (typeof value.value !== 'object')
-                        throw new RequestError(this.engine.request, 2540, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':vals must be an array or object' });
+                        throw new RequestError(this.engine.request, 2540, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':values must be an array or object' });
                     return Array.isArray(value.value)
                         ? this.arrayToList(value.value)
                         : this.arrayToList(Object.values(value.value));
                 case 'escape':
                     if (typeof value.value === 'object')
                         throw new RequestError(this.engine.request, 2550, 'ERROR_COMPRESSION_PARAMETERIZE', {
-                            message: ':esc must be a string, number, bool, undefined or null',
+                            message: ':escape must be a string, number, bool, undefined or null',
                         });
                     else if (typeof value.value === 'string') {
                         return this.escapeIdentifier(value.value);
@@ -83,7 +83,7 @@ export default class Compression {
                     return 'NULL';
                 case 'orderBy':
                     if (typeof value.value !== 'object')
-                        throw new RequestError(this.engine.request, 2560, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':vals must be an object' });
+                        throw new RequestError(this.engine.request, 2560, 'ERROR_COMPRESSION_PARAMETERIZE', { message: ':orderBy must be an object' });
                     return this.orderBy(value.value);
             }
         }
@@ -126,9 +126,9 @@ export default class Compression {
         return sql;
     }
     /**
-     * Colum values
+     * Assign
      */
-    colvals(object) {
+    assign(object) {
         let sql = '';
         for (const key in object) {
             sql +=
@@ -151,14 +151,14 @@ export default class Compression {
             toolBox.push({
                 prefix: ':',
                 tools: {
-                    colvals: function (value) {
-                        return { value, __tool__: 'colvals' };
+                    assign: function (value) {
+                        return { value, __tool__: 'assign' };
                     },
-                    cols: function (value) {
-                        return { value, __tool__: 'cols' };
+                    columns: function (value) {
+                        return { value, __tool__: 'columns' };
                     },
-                    vals: function (value) {
-                        return { value, __tool__: 'vals' };
+                    values: function (value) {
+                        return { value, __tool__: 'values' };
                     },
                     escape: function (value) {
                         return { value, __tool__: 'escape' };

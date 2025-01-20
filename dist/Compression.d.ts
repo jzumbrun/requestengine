@@ -38,9 +38,9 @@ export default class Compression {
      */
     private orderBy;
     /**
-     * Colum values
+     * Assign
      */
-    private colvals;
+    private assign;
     /**
      * Register Tools
      */

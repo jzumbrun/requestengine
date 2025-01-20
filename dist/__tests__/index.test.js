@@ -51,7 +51,7 @@ describe('RequestEngine', () => {
             start([
                 {
                     model: ':operators:update',
-                    compression: 'UPDATE operators SET {{:colvals intake.operator}} WHERE id = {{operator.id}}',
+                    compression: 'UPDATE operators SET {{:assign intake.operator}} WHERE id = {{operator.id}}',
                     intake: {
                         type: 'object',
                         properties: { operator: { type: 'object' } },
@@ -655,7 +655,7 @@ describe('RequestEngine', () => {
                         additionalProperties: false,
                     },
                     exhaust: { type: 'array' },
-                    compression: `INSERT INTO operators ({{:cols intake.operator}}) VALUES({{:vals intake.operator}}); SELECT {{:cols intake.throttle.select}} FROM operators ORDER BY {{:orderBy intake.throttle.orderBy}} LIMIT {{:escape intake.throttle.limit}}`,
+                    compression: `INSERT INTO operators ({{:columns intake.operator}}) VALUES({{:values intake.operator}}); SELECT {{:columns intake.throttle.select}} FROM operators ORDER BY {{:orderBy intake.throttle.orderBy}} LIMIT {{:escape intake.throttle.limit}}`,
                     ignition: ['operator'],
                 },
             ])

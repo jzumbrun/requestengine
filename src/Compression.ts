@@ -72,33 +72,33 @@ export default class Compression {
     // Ensure nulls, which are objects, do not fall to value.__tool__
     if (value && typeof value === 'object' && value.__tool__) {
       switch (value.__tool__) {
-        case 'colvals':
+        case 'assign':
           if (typeof value.value !== 'object')
             throw new RequestError(
               this.engine.request,
               2510,
               'ERROR_COMPRESSION_PARAMETERIZE',
-              { message: ':colvals must be an object' }
+              { message: ':set must be an object' }
             )
-          return this.colvals(value.value)
-        case 'cols':
+          return this.assign(value.value)
+        case 'columns':
           if (typeof value.value !== 'object')
             throw new RequestError(
               this.engine.request,
               2520,
               'ERROR_COMPRESSION_PARAMETERIZE',
-              { message: ':cols must be an array or object' }
+              { message: ':columns must be an array or object' }
             )
           return Array.isArray(value.value)
             ? this.arrayToList(value.value, true)
             : this.arrayToList(Object.keys(value.value), true)
-        case 'vals':
+        case 'values':
           if (typeof value.value !== 'object')
             throw new RequestError(
               this.engine.request,
               2540,
               'ERROR_COMPRESSION_PARAMETERIZE',
-              { message: ':vals must be an array or object' }
+              { message: ':values must be an array or object' }
             )
           return Array.isArray(value.value)
             ? this.arrayToList(value.value)
@@ -111,7 +111,7 @@ export default class Compression {
               'ERROR_COMPRESSION_PARAMETERIZE',
               {
                 message:
-                  ':esc must be a string, number, bool, undefined or null',
+                  ':escape must be a string, number, bool, undefined or null',
               }
             )
           else if (typeof value.value === 'string') {
@@ -129,7 +129,7 @@ export default class Compression {
               this.engine.request,
               2560,
               'ERROR_COMPRESSION_PARAMETERIZE',
-              { message: ':vals must be an object' }
+              { message: ':orderBy must be an object' }
             )
           return this.orderBy(value.value)
       }
@@ -180,9 +180,9 @@ export default class Compression {
     return sql
   }
   /**
-   * Colum values
+   * Assign
    */
-  private colvals(object: Record<string, unknown>): string {
+  private assign(object: Record<string, unknown>): string {
     let sql = ''
     for (const key in object) {
       sql +=
@@ -205,14 +205,14 @@ export default class Compression {
       toolBox.push({
         prefix: ':',
         tools: {
-          colvals: function (value: unknown) {
-            return { value, __tool__: 'colvals' }
+          assign: function (value: unknown) {
+            return { value, __tool__: 'assign' }
           },
-          cols: function (value: unknown) {
-            return { value, __tool__: 'cols' }
+          columns: function (value: unknown) {
+            return { value, __tool__: 'columns' }
           },
-          vals: function (value: unknown) {
-            return { value, __tool__: 'vals' }
+          values: function (value: unknown) {
+            return { value, __tool__: 'values' }
           },
           escape: function (value: unknown) {
             return { value, __tool__: 'escape' }
