@@ -165,18 +165,28 @@ export default class Compression {
    */
   private orderBy(object: Record<string, any>): string {
     let sql = ''
-    Object.keys(object).forEach((key: string, i) => {
+    if (!Object.keys(object).length) {
+      throw new RequestError(
+        this.engine.request,
+        2561,
+        'ERROR_COMPRESSION_PARAMETERIZE',
+        { message: ':orderBy must not be empty' }
+      )
+    }
+
+    for (const key in object) {
       const dir = object[key].toUpperCase()
       if (dir !== 'ASC' && dir !== 'DESC') {
         throw new RequestError(
           this.engine.request,
-          2561,
+          2562,
           'ERROR_COMPRESSION_PARAMETERIZE',
-          { message: 'Order by must be ASC or DESC' }
+          { message: ':orderBy value must be ASC or DESC' }
         )
       }
-      sql += (i === 0 ? '' : ', ') + `${this.escapeIdentifier(key)} ${dir}`
-    })
+      sql +=
+        (sql.length === 0 ? '' : ', ') + `${this.escapeIdentifier(key)} ${dir}`
+    }
     return sql
   }
   /**
@@ -184,6 +194,15 @@ export default class Compression {
    */
   private assign(object: Record<string, unknown>): string {
     let sql = ''
+
+    if (!Object.keys(object).length) {
+      throw new RequestError(
+        this.engine.request,
+        2511,
+        'ERROR_COMPRESSION_PARAMETERIZE',
+        { message: ':assign must not be empty' }
+      )
+    }
     for (const key in object) {
       sql +=
         (sql.length === 0 ? '' : ', ') +
