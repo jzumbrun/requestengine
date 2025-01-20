@@ -8,7 +8,7 @@ import RequestError from './errors/RequestError.js';
 export default class Intake {
     constructor(engine) {
         this.engine = engine;
-        this.avj = new Ajv({ useDefaults: true, removeAdditional: 'all' });
+        this.avj = new Ajv({ useDefaults: true });
         ajvKeywords.default(this.avj);
     }
     stroke() {
@@ -29,7 +29,7 @@ export default class Intake {
         if (!this.engine.model.ignition.length)
             return true;
         const setA = new Set(this.engine.model.ignition);
-        return (((_a = this.engine.operator) === null || _a === void 0 ? void 0 : _a.keys) || []).some(value => setA.has(value));
+        return (((_a = this.engine.operator) === null || _a === void 0 ? void 0 : _a.keys) || []).some((value) => setA.has(value));
     }
     /**
      * Check
@@ -40,22 +40,30 @@ export default class Intake {
             properties: {
                 serial: {
                     type: 'string',
-                    default: ''
+                    default: '',
                 },
                 engine: {
                     type: 'string',
-                    default: 'ERROR_MISSING_MODEL'
+                    default: 'ERROR_MISSING_MODEL',
                 },
                 fuel: {
-                    type: ['number', 'integer', 'string', 'boolean', 'array', 'object', 'null']
+                    type: [
+                        'number',
+                        'integer',
+                        'string',
+                        'boolean',
+                        'array',
+                        'object',
+                        'null',
+                    ],
                 },
                 timing: {
                     type: 'boolean',
-                    default: false
-                }
+                    default: false,
+                },
             },
             additionalProperties: false,
-            required: ['engine']
+            required: ['engine'],
         }, this.engine.request);
     }
 }

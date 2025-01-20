@@ -7,7 +7,7 @@ import RequestError from './errors/RequestError.js';
  */
 export default class Exhaust {
     constructor(engine, exhaustValves) {
-        this.avj = new Ajv({ useDefaults: true, removeAdditional: 'all' });
+        this.avj = new Ajv({ useDefaults: true });
         ajvKeywords.default(this.avj);
         this.engine = engine;
         this.exhaustValves = exhaustValves;

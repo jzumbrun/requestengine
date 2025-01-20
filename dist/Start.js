@@ -8,7 +8,7 @@ export default class Start {
     constructor(garage, gear) {
         this.garage = garage;
         this.gear = gear;
-        this.avj = new Ajv({ useDefaults: true, removeAdditional: 'all' });
+        this.avj = new Ajv({ useDefaults: true });
         ajvKeywords.default(this.avj);
     }
     turnOver() {
@@ -38,20 +38,20 @@ export default class Start {
                             tools: {
                                 type: 'object',
                                 patternProperties: {
-                                    '^[_a-zA-Z]*$': { typeof: 'function' }
+                                    '^[_a-zA-Z]*$': { typeof: 'function' },
                                 },
-                                additionalProperties: false
+                                additionalProperties: false,
                             },
                             context: { type: 'boolean' },
-                            prefix: { type: 'string', pattern: '^[_a-zA-Z]*$' }
+                            prefix: { type: 'string', pattern: '^[_a-zA-Z]*$' },
                         },
                         required: ['tools'],
-                        additionalProperties: false
-                    }
-                }
+                        additionalProperties: false,
+                    },
+                },
             },
             required: ['engines'],
-            additionalProperties: false
+            additionalProperties: false,
         }, this.garage);
     }
     checkGear() {
@@ -59,10 +59,10 @@ export default class Start {
             type: 'object',
             properties: {
                 neutral: { typeof: 'function' },
-                drive: { typeof: 'function' }
+                drive: { typeof: 'function' },
             },
             required: ['drive'],
-            additionalProperties: false
+            additionalProperties: false,
         }, this.gear);
     }
     /**
@@ -74,35 +74,40 @@ export default class Start {
             properties: {
                 model: {
                     type: 'string',
-                    default: 'ERROR_MISSING_MODEL'
+                    default: 'ERROR_MISSING_MODEL',
                 },
                 intake: {
                     type: 'object',
-                    default: {}
+                    default: {},
                 },
                 exhaust: {
                     type: 'object',
-                    default: {}
+                    default: {},
                 },
                 ignition: {
                     type: 'array',
-                    default: []
+                    default: [],
                 },
                 compression: {
-                    type: 'string'
+                    type: 'string',
                 },
                 power: {
                     typeof: 'function',
                     // Do not set default function
-                }
+                },
             },
-            oneOf: [{
-                    type: 'object', required: ['compression']
-                }, {
-                    type: 'object', required: ['power']
-                }],
+            oneOf: [
+                {
+                    type: 'object',
+                    required: ['compression'],
+                },
+                {
+                    type: 'object',
+                    required: ['power'],
+                },
+            ],
             additionalProperties: false,
-            required: ['model', 'intake', 'exhaust', 'ignition']
+            required: ['model', 'intake', 'exhaust', 'ignition'],
         }, engine);
     }
 }
