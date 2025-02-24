@@ -17,7 +17,7 @@ The client request properties align with the server properties as follows. These
 - fuel -> intake
   - The client fuel will provide data to the server engine's intake
 - keys -> ignition
-  - The client keys must have one value that matches the server engine's ignition
+  - The client operator's keys must have one value that matches the server engine's ignition
 
 ## Client Requests
 

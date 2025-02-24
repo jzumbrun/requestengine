@@ -6,7 +6,6 @@ import type {
   IResponse,
   IRequest,
   IOperator,
-  IIntakeValves,
 } from './types.js'
 import Intake from './Intake.js'
 import Compression from './Compression.js'
@@ -24,8 +23,6 @@ export default class Engine {
   readonly gear: IGear
 
   readonly model: IEngineModel
-  intakeValves!: IIntakeValves
-  exhaustValves: unknown
 
   constructor(
     request: IRequest,
@@ -55,34 +52,17 @@ export default class Engine {
     return engine.cycle()
   }
 
-  private liftIntakeValves(): void {
-    const intake = this.request.fuel
-    const operator = this.operator
-    const revolution = this.revolution
-    const model = this.model
-    this.intakeValves = {
-      intake,
-      operator,
-      revolution,
-      model,
-    }
-  }
-
   private async cycle(): Promise<IResponse> {
     const intake = new Intake(this)
     intake.stroke()
 
-    this.liftIntakeValves()
-
     if (this.model.power) {
       const power = new Power(this)
-      this.exhaustValves = await power.stroke()
-      const exhaust = new Exhaust(this, this.exhaustValves)
+      const exhaust = new Exhaust(this, await power.stroke())
       return exhaust.stroke()
     } else {
       const compression = new Compression(this)
-      this.exhaustValves = await compression.stroke()
-      const exhaust = new Exhaust(this, this.exhaustValves)
+      const exhaust = new Exhaust(this, await compression.stroke())
       return exhaust.stroke()
     }
   }

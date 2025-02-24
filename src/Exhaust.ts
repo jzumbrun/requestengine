@@ -11,20 +11,20 @@ import RequestError from './errors/RequestError.js'
 export default class Exhaust {
   private avj: Ajv
   private engine: Engine
-  private exhaustValves: unknown
+  response: unknown
 
-  constructor(engine: Engine, exhaustValves: unknown) {
+  constructor(engine: Engine, response: unknown) {
     this.avj = new Ajv({ useDefaults: true })
     ajvKeywords.default(this.avj)
     this.engine = engine
-    this.exhaustValves = exhaustValves
+    this.response = response
   }
 
   public stroke(): IResponse {
     // Do we have proper exhaust schema
     if (
       this.engine.model.exhaust &&
-      !this.avj.validate(this.engine.model.exhaust, this.exhaustValves)
+      !this.avj.validate(this.engine.model.exhaust, this.response)
     ) {
       throw new RequestError(
         getRequestEngine(this.engine.request),
@@ -35,11 +35,11 @@ export default class Exhaust {
     }
 
     if (this.engine.request.serial)
-      this.engine.revolution[this.engine.request.serial] = this.exhaustValves
+      this.engine.revolution[this.engine.request.serial] = this.response
     // Add succesfull request response by id
     return {
       ...getRequestEngine(this.engine.request),
-      response: this.exhaustValves,
+      response: this.response,
     }
   }
 }

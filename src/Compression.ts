@@ -49,9 +49,11 @@ export default class Compression {
   private compile(): string {
     this.params = []
     this.registerEscapeExpression()
-    const compiled = this.handlebars.compile(this.engine.model.compression)(
-      this.engine.intakeValves
-    )
+    const compiled = this.handlebars.compile(this.engine.model.compression)({
+      intake: this.engine.request.fuel,
+      operator: this.engine.operator,
+      revolution: this.engine.revolution,
+    })
     this.unRegisterEscapeExpression()
     return compiled
   }
