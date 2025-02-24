@@ -6,8 +6,8 @@ import { IResponse } from './types.js';
 export default class Exhaust {
     private avj;
     private engine;
-    private exhaustValves;
-    constructor(engine: Engine, exhaustValves: unknown);
+    response: unknown;
+    constructor(engine: Engine, response: unknown);
     stroke(): IResponse;
 }
 //# sourceMappingURL=Exhaust.d.ts.map

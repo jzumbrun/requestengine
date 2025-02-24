@@ -28,33 +28,18 @@ export default class Engine {
         const engine = new Engine(request, garage, gear, operator, revolution);
         return engine.cycle();
     }
-    liftIntakeValves() {
-        const intake = this.request.fuel;
-        const operator = this.operator;
-        const revolution = this.revolution;
-        const model = this.model;
-        this.intakeValves = {
-            intake,
-            operator,
-            revolution,
-            model,
-        };
-    }
     cycle() {
         return __awaiter(this, void 0, void 0, function* () {
             const intake = new Intake(this);
             intake.stroke();
-            this.liftIntakeValves();
             if (this.model.power) {
                 const power = new Power(this);
-                this.exhaustValves = yield power.stroke();
-                const exhaust = new Exhaust(this, this.exhaustValves);
+                const exhaust = new Exhaust(this, yield power.stroke());
                 return exhaust.stroke();
             }
             else {
                 const compression = new Compression(this);
-                this.exhaustValves = yield compression.stroke();
-                const exhaust = new Exhaust(this, this.exhaustValves);
+                const exhaust = new Exhaust(this, yield compression.stroke());
                 return exhaust.stroke();
             }
         });
